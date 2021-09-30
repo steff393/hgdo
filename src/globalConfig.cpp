@@ -14,7 +14,7 @@ char cfgBuildDate[]       = "2021-09-30";	      // hgdo build date
 char     cfgApSsid[32];	              // SSID of the initial Access Point
 char     cfgApPass[63];               // Password of the initial Access Point
 char     cfgNtpServer[30];            // NTP server
-
+uint8_t  cfgTxEnable;		              // 0: disable TX, 1: enable TX
 
 bool createConfig() {
 	StaticJsonDocument<1024> doc;
@@ -23,7 +23,7 @@ bool createConfig() {
 	// -------------------------------------
 	doc["cfgApSsid"]              = F("hgdo");
 	doc["cfgApPass"]              = F("hgdo1234");
-	doc["cfgNtpServer"]           = F("europe.pool.ntp.org");
+	doc["cfgTxEnable"]           	= 1;
 	// -------------------------------------
 	
 	File configFile = LittleFS.open(F("/cfg.json"), "w");
@@ -87,6 +87,7 @@ void loadConfig() {
 	strncpy(cfgApSsid,          doc["cfgApSsid"]            | "hgdo",             sizeof(cfgApSsid));
 	strncpy(cfgApPass,          doc["cfgApPass"]            | "hgdo1234",         sizeof(cfgApPass));
 	strncpy(cfgNtpServer,       doc["cfgNtpServer"]         | "europe.pool.ntp.org", sizeof(cfgNtpServer));
+	cfgTxEnable               = doc["cfgTxEnable"]          | 1;
 	
 	LOG(m, "cfgHgdoVersion: %s", cfgHgdoVersion);
 	LOG(m, "cfgBuildDate: %s"  , cfgBuildDate);

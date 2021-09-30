@@ -8,6 +8,7 @@
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <globalConfig.h>
+#include <hcp.h>
 #include <LittleFS.h>
 #include <logger.h>
 #include <SPIFFSEditor.h>
@@ -99,10 +100,9 @@ void webServer_begin() {
 
 	server.on("/json", HTTP_GET, [](AsyncWebServerRequest *request) {
 		DynamicJsonDocument data(2048);
-		uint8_t id = 0;
 		// modify values
-		if (request->hasParam(F("id"))) {
-			id = request->getParam(F("id"))->value().toInt();
+		if (request->hasParam(F("act"))) {
+			hcp_triggerAction((hcp_action_t)request->getParam(F("act"))->value().toInt());
 		}
 
 		// provide the complete content
@@ -110,6 +110,7 @@ void webServer_begin() {
 		data[F("hgdo")][F("bldDate")] = cfgBuildDate;
 		data[F("hgdo")][F("timeNow")] = log_time();
 		data[F("hgdo")][F("millis")]  = millis();
+		data[F("hgdo")][F("status")]  = hcp_getBroadcast();
 		data[F("wifi")][F("mac")] = WiFi.macAddress();
 		int qrssi = WiFi.RSSI();
 		data[F("wifi")][F("rssi")] = qrssi;

@@ -1,6 +1,7 @@
 // Copyright (c) 2021 steff393, MIT license
 // based on: https://github.com/stephan192/hoermann_door/blob/main/pic16/hoermann.c
 
+#include <Arduino.h>
 #include <globalConfig.h>
 #include <hcp.h>
 #include <SoftwareSerial.h>
@@ -56,7 +57,6 @@ static bool rx_message_ready = false;
 
 static uint8_t tx_buffer[15+3] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static bool tx_message_ready = false;
-static uint8_t tx_counter = 0;
 static uint8_t tx_length = 0;
 
 static uint16_t slave_respone_data = RESPONSE_DEFAULT;
@@ -130,9 +130,51 @@ static void parse_message(void)
 }
 
 
+uint16_t hcp_getBroadcast(void)
+{
+  return broadcast_status;
+}
+
+
+void hcp_triggerAction(hcp_action_t action)
+{
+  switch(action)
+  {
+    case HCP_ACTION_STOP:
+    {
+      slave_respone_data = RESPONSE_STOP;
+      break;
+    }
+    case HCP_ACTION_OPEN:
+    {
+      slave_respone_data = RESPONSE_OPEN;
+      break;
+    }
+    case HCP_ACTION_CLOSE:
+    {
+      slave_respone_data = RESPONSE_CLOSE;
+      break;
+    }
+    case HCP_ACTION_VENTING:
+    {
+      slave_respone_data = RESPONSE_VENTING;
+      break;
+    }
+    case HCP_ACTION_TOGGLE_LIGHT:
+    {
+      slave_respone_data = RESPONSE_TOGGLE_LIGHT;
+      break;
+    }
+  }
+}
+
+
 static void receive() {
-	static  int8_t   counter = 0;
-	static uint8_t   length  = 0;
+	static int8_t    counter      = 0;
+	static uint8_t   length       = 0;
+	static bool      syncNeeded   = true;
+	static byte      prevData1    = 0;
+	static byte      prevData2    = 0;
 	byte data;
 	
 	while (S.available()) {
@@ -143,6 +185,21 @@ static void receive() {
 		}
 		Serial.print(data, HEX);
 		Serial.print(" ");
+
+		if (syncNeeded) {
+			// wait for the sequence 01 80 CRC and then start again
+			if ((prevData1 == CMD_SLAVE_SCAN) && (prevData2 == MASTER_ADDR)) {
+				prevData1 = 0;
+				prevData2 = 0;
+				syncNeeded = false;
+				Serial.println("Sync found");
+			} else {
+				// do nothing, just copy the data
+				prevData1 = prevData2;
+				prevData2 = data;
+			}
+			return;
+		}
 
 		if (!rx_message_ready) {
 			rx_buffer[counter] = data;
@@ -155,23 +212,45 @@ static void receive() {
 					Serial.print(" CRC ok ");
 				} else {
 					Serial.print(" CRC nok ");
+					syncNeeded = true;
 				}
 				Serial.println(millis());
 				counter = 0;
 			}
 		}
-
 	}
-	
+}
 
+static void transmit() {
+	Serial.print(millis());Serial.print(": TX ready: "); 
+	for (uint8_t i=0; i<tx_length; i++) {
+		if (tx_buffer[i] < 16) {
+			Serial.print("0");
+		}
+		Serial.print(tx_buffer[i], HEX);
+		Serial.print(" ");
+	}
+
+	// Generate Sync break
+	Serial.print(", SYNC: "); Serial.print(millis());
+	digitalWrite(PIN_DE_RE, HIGH);		// LOW = listen, HIGH = transmit
+	S.begin(9600, SWSERIAL_7N1);
+	S.write(0x00);
+	S.flush();
+
+	// Transmit
+	S.begin(19200, SWSERIAL_8N1);
+	Serial.print("..."); Serial.print(millis());
+	S.write(tx_buffer, tx_length);
+	S.flush();
+	tx_message_ready = false;
+	digitalWrite(PIN_DE_RE, LOW);		// LOW = listen, HIGH = transmit
+	Serial.print(" TX finished, "); Serial.println(millis());
 }
 
 
-
-
 void hcp_setup() {
-	//S.begin(19200, SWSERIAL_8N1, PIN_RO, PIN_DI); 
-	S.begin(19200, SWSERIAL_8N1, PIN_DI, PIN_RO); //  PINs VERTAUSCHT
+	S.begin(19200, SWSERIAL_8N1, PIN_RO, PIN_DI);
 	digitalWrite(PIN_DE_RE, LOW);		// LOW = listen, HIGH = transmit
 }
 
@@ -186,8 +265,6 @@ void hcp_loop() {
 	}
 	lastCall = millis();
 
-
-
 	if (rx_message_ready) {
 		parse_message();
 		rx_message_ready = false;
@@ -195,29 +272,8 @@ void hcp_loop() {
     // Wait 3ms before answering. If not the Supramatic doesn't accept our answer.
 	}
 
-	if((tx_message_ready) && (delay_counter == 0)) {
-		Serial.print(millis());Serial.print(": TX ready: "); 
-		for (uint8_t i=0; i<tx_length; i++) {
-			if (tx_buffer[i] < 16) {
-				Serial.print("0");
-			}
-			Serial.print(tx_buffer[i], HEX);
-			Serial.print(" ");
-		}
-
-		// the order TX -> RX is intended, as there shall be 3ms between receiving and sending
-		Serial.print(", SYNC: "); Serial.print(millis());
-		digitalWrite(PIN_DE_RE, HIGH);		// LOW = listen, HIGH = transmit
-		S.begin(9600, SWSERIAL_7N1);
-		S.write(0x00);
-		S.flush();
-		S.begin(19200, SWSERIAL_8N1);
-		Serial.print("..."); Serial.print(millis());
-		S.write(tx_buffer, tx_length);
-		S.flush();
-		tx_message_ready = false;
-		digitalWrite(PIN_DE_RE, LOW);		// LOW = listen, HIGH = transmit
-		Serial.print(" TX finished, "); Serial.println(millis());
+	if(cfgTxEnable && tx_message_ready && (delay_counter == 0)) {
+		transmit();
 	}
 
 	if (delay_counter > 0) {

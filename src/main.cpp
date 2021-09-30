@@ -32,8 +32,6 @@ void setup() {
 	char pass[63]; strcpy(pass, cfgApPass);
 	wifiManager.autoConnect(ssid, pass);
 
-	logger_begin();
-
 	// setup the Webserver
 	webServer_begin();
 
