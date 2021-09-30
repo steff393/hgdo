@@ -110,7 +110,7 @@ static void parse_message(void)
 			tx_buffer[4] = calc_crc8(tx_buffer, 4);
 			tx_length = 5;
 			tx_message_ready = true;
-			Serial.println("BusScan");
+			Serial.println("BusScan UAP1");
 		}
 		// Slave status request command?
 		if((length == 0x01) && (rx_buffer[2] == CMD_SLAVE_STATUS_REQUEST))
