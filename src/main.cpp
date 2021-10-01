@@ -3,9 +3,9 @@
 #include <Arduino.h>
 #include <ArduinoOTA.h>
 #include <globalConfig.h>
-#include <hcp.h>
 #include <LittleFS.h>
 #include <logger.h>
+#include <uap.h>
 #include <WiFiManager.h>
 #include <webServer.h>
 
@@ -44,7 +44,7 @@ void setup() {
 		_handlingOTA = true;
 	});
 
-	hcp_setup();
+	uap_setup();
 
 	Serial.print(F("Boot time: ")); Serial.println(millis());
 	Serial.print(F("Free heap: ")); Serial.println(ESP.getFreeHeap());
@@ -55,7 +55,7 @@ void loop() {
 	ArduinoOTA.handle();
 	if(!_handlingOTA) {
 		logger_loop();
-		hcp_loop();
+		uap_loop();
 		webServer_loop();
 	}
 }

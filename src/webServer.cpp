@@ -8,10 +8,10 @@
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <globalConfig.h>
-#include <hcp.h>
 #include <LittleFS.h>
 #include <logger.h>
 #include <SPIFFSEditor.h>
+#include <uap.h>
 #include <webServer.h>
 #define WIFI_MANAGER_USE_ASYNC_WEB_SERVER
 #include <WiFiManager.h>
@@ -102,7 +102,7 @@ void webServer_begin() {
 		DynamicJsonDocument data(2048);
 		// modify values
 		if (request->hasParam(F("act"))) {
-			hcp_triggerAction((hcp_action_t)request->getParam(F("act"))->value().toInt());
+			uap_triggerAction((uap_action_t)request->getParam(F("act"))->value().toInt());
 		}
 
 		// provide the complete content
@@ -110,7 +110,7 @@ void webServer_begin() {
 		data[F("hgdo")][F("bldDate")] = cfgBuildDate;
 		data[F("hgdo")][F("timeNow")] = log_time();
 		data[F("hgdo")][F("millis")]  = millis();
-		data[F("hgdo")][F("status")]  = hcp_getBroadcast();
+		data[F("hgdo")][F("status")]  = uap_getBroadcast();
 		data[F("wifi")][F("mac")] = WiFi.macAddress();
 		int qrssi = WiFi.RSSI();
 		data[F("wifi")][F("rssi")] = qrssi;
