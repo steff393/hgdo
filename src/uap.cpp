@@ -62,14 +62,21 @@ static uint8_t tx_length = 0;
 static uint16_t slave_respone_data = RESPONSE_DEFAULT;
 static uint16_t broadcast_status = 0;
 
-static uint8_t calc_crc8(uint8_t *p_data, uint8_t length)
-{
+
+static void printByte(byte b) {
+	if (b < 16) {
+		Serial.print("0");
+	}
+	Serial.print(b, HEX);
+	Serial.print(" ");
+}
+
+static uint8_t calc_crc8(uint8_t *p_data, uint8_t length) {
 	uint8_t i;
 	uint8_t data;
 	uint8_t crc = CRC8_INITIAL_VALUE;
 	
-	for(i = 0; i < length; i++)
-	{
+	for(i = 0; i < length; i++) {
 		/* XOR-in next input byte */
 		data = *p_data ^ crc;
 		p_data++;
@@ -81,28 +88,23 @@ static uint8_t calc_crc8(uint8_t *p_data, uint8_t length)
 }
 
 
-static void parse_message(void)
-{
+static void parse_message(void) {
 	uint8_t length;
 	uint8_t counter;
 	
 	length = rx_buffer[1] & 0x0F;
 	counter = (rx_buffer[1] & 0xF0) + 0x10;
 	
-	if(rx_buffer[0] == BROADCAST_ADDR)
-	{
-		if(length == 0x02)
-		{
+	if(rx_buffer[0] == BROADCAST_ADDR) {
+		if(length == 0x02) {
 			broadcast_status = rx_buffer[2];
 			broadcast_status |= (uint16_t)rx_buffer[3] << 8;
 			Serial.print(" Broadcast");
 		}
 	}
-	if(rx_buffer[0] == UAP1_ADDR)
-	{
+	if(rx_buffer[0] == UAP1_ADDR)	{
 		// Bus scan command?
-		if((length == 0x02) && (rx_buffer[2] == CMD_SLAVE_SCAN))
-		{
+		if((length == 0x02) && (rx_buffer[2] == CMD_SLAVE_SCAN)) {
 			tx_buffer[0] = MASTER_ADDR;
 			tx_buffer[1] = 0x02 | counter;
 			tx_buffer[2] = UAP1_TYPE;
@@ -113,8 +115,7 @@ static void parse_message(void)
 			Serial.print(" BusScan UAP1");
 		}
 		// Slave status request command?
-		if((length == 0x01) && (rx_buffer[2] == CMD_SLAVE_STATUS_REQUEST))
-		{
+		if((length == 0x01) && (rx_buffer[2] == CMD_SLAVE_STATUS_REQUEST)) {
 			tx_buffer[0] = MASTER_ADDR;
 			tx_buffer[1] = 0x03 | counter;
 			tx_buffer[2] = CMD_SLAVE_STATUS_RESPONSE;
@@ -131,41 +132,34 @@ static void parse_message(void)
 }
 
 
-uap_status_t uap_getBroadcast(void)
-{
+uap_status_t uap_getBroadcast(void) {
   return (uap_status_t) broadcast_status;
 }
 
 
-void uap_triggerAction(uap_action_t action)
-{
-  switch(action)
-  {
-    case UAP_ACTION_STOP:
-    {
+void uap_triggerAction(uap_action_t action) {
+  switch(action) {
+    case UAP_ACTION_STOP: {
       slave_respone_data = RESPONSE_STOP;
       break;
     }
-    case UAP_ACTION_OPEN:
-    {
+    case UAP_ACTION_OPEN: {
       slave_respone_data = RESPONSE_OPEN;
       break;
     }
-    case UAP_ACTION_CLOSE:
-    {
+    case UAP_ACTION_CLOSE: {
       slave_respone_data = RESPONSE_CLOSE;
       break;
     }
-    case UAP_ACTION_VENTING:
-    {
+    case UAP_ACTION_VENTING: {
       slave_respone_data = RESPONSE_VENTING;
       break;
     }
-    case UAP_ACTION_TOGGLE_LIGHT:
-    {
+    case UAP_ACTION_TOGGLE_LIGHT: {
       slave_respone_data = RESPONSE_TOGGLE_LIGHT;
       break;
     }
+		default: ; // do nothing
   }
 }
 
@@ -180,12 +174,7 @@ static void receive() {
 	
 	while (S.available()) {
 		data = S.read();	// read buffer, but ignore as long as last message was not parsed
-
-		if (data < 16) {
-			Serial.print("0");
-		}
-		Serial.print(data, HEX);
-		Serial.print(" ");
+		printByte(data);	// print to serial as hex value
 
 		if (syncNeeded) {
 			// wait for the sequence 01 80 CRC and then start again
@@ -224,11 +213,7 @@ static void receive() {
 
 static void transmit() {
 	for (uint8_t i=0; i<tx_length; i++) {
-		if (tx_buffer[i] < 16) {
-			Serial.print("0");
-		}
-		Serial.print(tx_buffer[i], HEX);
-		Serial.print(" ");
+		printByte(tx_buffer[i]);	// print to serial as hex value
 	}
 
 	// Generate Sync break
@@ -278,5 +263,4 @@ void uap_loop() {
 	if (delay_counter > 0) {
     delay_counter--;
   }
-	//Serial.print(".");
 }
