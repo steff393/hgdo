@@ -131,9 +131,9 @@ static void parse_message(void)
 }
 
 
-uint16_t uap_getBroadcast(void)
+uap_status_t uap_getBroadcast(void)
 {
-  return broadcast_status;
+  return (uap_status_t) broadcast_status;
 }
 
 

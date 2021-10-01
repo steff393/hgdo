@@ -110,7 +110,14 @@ void webServer_begin() {
 		data[F("hgdo")][F("bldDate")] = cfgBuildDate;
 		data[F("hgdo")][F("timeNow")] = log_time();
 		data[F("hgdo")][F("millis")]  = millis();
-		data[F("hgdo")][F("status")]  = uap_getBroadcast();
+		uap_status_t bc = uap_getBroadcast();
+		data[F("door")][F("open")]     =  (bc & UAP_STATUS_OPEN)?true:false;
+		data[F("door")][F("closed")]   =  (bc & UAP_STATUS_CLOSED)?true:false;
+		data[F("door")][F("error")]    =  (bc & UAP_STATUS_ERROR)?true:false;
+		data[F("door")][F("opening")]  = ((bc & (UAP_STATUS_DIRECTION | UAP_STATUS_MOVING))==UAP_STATUS_MOVING)?true:false;
+		data[F("door")][F("closing")]  = ((bc & (UAP_STATUS_DIRECTION | UAP_STATUS_MOVING))==UAP_STATUS_CLOSING)?true:false;
+		data[F("door")][F("venting")]  =  (bc & UAP_STATUS_VENTPOS)?true:false;
+
 		data[F("wifi")][F("mac")] = WiFi.macAddress();
 		int qrssi = WiFi.RSSI();
 		data[F("wifi")][F("rssi")] = qrssi;

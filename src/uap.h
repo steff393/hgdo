@@ -13,9 +13,20 @@ typedef enum
   UAP_ACTION_TOGGLE_LIGHT = 4
 } uap_action_t;
 
-extern void     uap_setup();
-extern void     uap_loop();
-extern uint16_t uap_getBroadcast(void);
-extern void     uap_triggerAction(uap_action_t action);
+typedef enum
+{
+  UAP_STATUS_OPEN         = 0x0001,
+  UAP_STATUS_CLOSED       = 0x0002,
+  UAP_STATUS_ERROR        = 0x0010,
+  UAP_STATUS_DIRECTION    = 0x0020,
+  UAP_STATUS_MOVING       = 0x0040,
+  UAP_STATUS_CLOSING      = 0x0060,
+  UAP_STATUS_VENTPOS      = 0x0080
+} uap_status_t;
+
+extern void         uap_setup();
+extern void         uap_loop();
+extern uap_status_t uap_getBroadcast(void);
+extern void         uap_triggerAction(uap_action_t action);
 
 #endif /* UAP_H */
