@@ -95,7 +95,7 @@ static void parse_message(void)
 		{
 			broadcast_status = rx_buffer[2];
 			broadcast_status |= (uint16_t)rx_buffer[3] << 8;
-			Serial.println("Broadcast");
+			Serial.print(" Broadcast");
 		}
 	}
 	if(rx_buffer[0] == UAP1_ADDR)
@@ -110,7 +110,7 @@ static void parse_message(void)
 			tx_buffer[4] = calc_crc8(tx_buffer, 4);
 			tx_length = 5;
 			tx_message_ready = true;
-			Serial.println("BusScan UAP1");
+			Serial.print(" BusScan UAP1");
 		}
 		// Slave status request command?
 		if((length == 0x01) && (rx_buffer[2] == CMD_SLAVE_STATUS_REQUEST))
@@ -124,9 +124,10 @@ static void parse_message(void)
 			tx_buffer[5] = calc_crc8(tx_buffer, 5);
 			tx_length = 6;
 			tx_message_ready = true;
-			Serial.println("SlaveStatusReq");
+			Serial.print(" SlaveStatusReq");
 		}
 	}
+	Serial.println("");
 }
 
 
@@ -214,7 +215,7 @@ static void receive() {
 					Serial.print(" CRC nok ");
 					syncNeeded = true;
 				}
-				Serial.println(millis());
+				Serial.print(millis());
 				counter = 0;
 			}
 		}
@@ -222,7 +223,6 @@ static void receive() {
 }
 
 static void transmit() {
-	Serial.print(millis());Serial.print(": TX ready: "); 
 	for (uint8_t i=0; i<tx_length; i++) {
 		if (tx_buffer[i] < 16) {
 			Serial.print("0");
@@ -232,7 +232,7 @@ static void transmit() {
 	}
 
 	// Generate Sync break
-	Serial.print(", SYNC: "); Serial.print(millis());
+	Serial.print(" Transmit "); Serial.print(millis());
 	digitalWrite(PIN_DE_RE, HIGH);		// LOW = listen, HIGH = transmit
 	S.begin(9600, SWSERIAL_7N1);
 	S.write(0x00);
@@ -240,12 +240,11 @@ static void transmit() {
 
 	// Transmit
 	S.begin(19200, SWSERIAL_8N1);
-	Serial.print("..."); Serial.print(millis());
 	S.write(tx_buffer, tx_length);
 	S.flush();
 	tx_message_ready = false;
 	digitalWrite(PIN_DE_RE, LOW);		// LOW = listen, HIGH = transmit
-	Serial.print(" TX finished, "); Serial.println(millis());
+	Serial.print(" finished: "); Serial.println(millis());
 }
 
 
