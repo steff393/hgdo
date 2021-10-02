@@ -15,9 +15,13 @@ extern char     cfgApSsid[32];               // SSID of the initial Access Point
 extern char     cfgApPass[63];               // Password of the initial Access Point
 extern char     cfgNtpServer[30];            // NTP server
 extern uint8_t  cfgTxEnable;                 // 0: disable TX, 1: enable TX
-extern uint8_t  cfgTimeOn;                   // Hour to  enable button
-extern uint8_t  cfgTimeOff;                  // Hour to disable button
+extern uint8_t  cfgTimeOn;                   // Hour to  enable button [h]
+extern uint8_t  cfgTimeOff;                  // Hour to disable button [h]
 extern uint16_t cfgBtnDebounce;              // Debounce time for button [ms]
+extern uint8_t  cfgAcTime;                   // Hour to start the auto-close [h]
+extern uint8_t  cfgAcDur1;                   // Duration of the auto-close PREWARN phase [s]
+extern uint8_t  cfgAcDur2;                   // Duration of the auto-close WAIT    phase [s]
+
 
 extern void loadConfig();
 

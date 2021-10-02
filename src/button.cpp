@@ -1,6 +1,7 @@
 // Copyright (c) 2021 steff393, MIT license
 
 #include <Arduino.h>
+#include <autoClose.h>
 #include <Bounce2.h>
 #include <globalConfig.h>
 #include <logger.h>
@@ -29,14 +30,9 @@ static void triggerButton(bool allowOpen) {
 		return;
 	} 
 
-	if ((bc & UAP_STATUS_CLOSED) ||                       // when door is completely closed   OR
-		(!(bc & UAP_STATUS_MOVING) && (lastMove == DOWN))) {// when door is standstill and last move was DOWN   then
-		// check if allowed
-		if (allowOpen) {
-			uap_triggerAction(UAP_ACTION_OPEN);               // open
-		} else {
-			uap_triggerAction(UAP_ACTION_CLOSE);              // not sure... but better allow to close
-		}
+	if (((bc & UAP_STATUS_CLOSED) && allowOpen) ||         // when door is completely closed AND Opening is allowed   OR
+		 (!(bc & UAP_STATUS_MOVING) && (lastMove == DOWN))) {// when door is standstill and last move was DOWN   then
+		uap_triggerAction(UAP_ACTION_OPEN);                  // open
 		return;
 	}
 
@@ -66,10 +62,8 @@ void btn_loop() {
 	btn.update();
 	if (btn.pressed()) {
 		LOG(m, "Pressed", "");
-
-		char timeStr[9]; //hh:mm:ss
-		strncpy(timeStr, log_time().c_str(), 2); 
-		uint8_t time = atoi(timeStr);
-		triggerButton(time >= cfgTimeOn && time < cfgTimeOff);
+		uint8_t hour = log_getHours();
+		ac_abort(false);  // abort a possible auto-close, but don't force the stop, this will be done by triggerButton() anyway
+		triggerButton(hour >= cfgTimeOn && hour < cfgTimeOff);
 	}
 }

@@ -18,6 +18,9 @@ uint8_t  cfgTxEnable;                 // 0: disable TX, 1: enable TX
 uint8_t  cfgTimeOn;                   // Hour to  enable button
 uint8_t  cfgTimeOff;                  // Hour to disable button
 uint16_t cfgBtnDebounce;              // Debounce time for button [ms]
+uint8_t  cfgAcTime;                   // Hour to start the auto-close [h]
+uint8_t  cfgAcDur1;                   // Duration of the auto-close PREWARN phase [s]
+uint8_t  cfgAcDur2;                   // Duration of the auto-close WAIT    phase [s]
 
 bool createConfig() {
 	StaticJsonDocument<1024> doc;
@@ -94,7 +97,10 @@ void loadConfig() {
 	cfgTimeOn                 = doc["cfgTimeOn"]            | 24;
 	cfgTimeOff                = doc["cfgTimeOff"]           | 0;
 	cfgBtnDebounce            = doc["cfgBtnDebounce"]       | 300;
-	
+	cfgAcTime                 = doc["cfgAcTime"]            | 24;
+	cfgAcDur1                 = doc["cfgAcDur1"]            | 2;
+	cfgAcDur2                 = doc["cfgAcDur2"]            | 30;
+
 	LOG(m, "cfgHgdoVersion: %s", cfgHgdoVersion);
 	LOG(m, "cfgBuildDate: %s"  , cfgBuildDate);
 

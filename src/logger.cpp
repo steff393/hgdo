@@ -13,7 +13,7 @@
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, cfgNtpServer, 3600, 60000); // GMT+1 and update every minute
 
-static const char *mod[5] = {"", "CFG ", "WEBS", "SOCK", "BTN "};
+static const char *mod[6] = {"", "CFG ", "WEBS", "SOCK", "BTN ", "AUTO"};
 char *   bootLog;
 uint16_t bootLogSize;
 boolean written = false;
@@ -137,6 +137,14 @@ void log(uint8_t module, const char *msg, boolean newLine /* =true */) {
 
 String log_time() {
 	return(timeClient.getFormattedTime());
+}
+
+uint8_t log_getHours() {
+  return ((timeClient.getEpochTime()  % 86400L) / 3600);
+}
+
+uint8_t log_getMinutes() {
+  return ((timeClient.getEpochTime() % 3600) / 60);
 }
 
 uint32_t log_unixTime() {
