@@ -8,6 +8,8 @@
 #include <uap.h>
 #include <WiFiManager.h>
 #include <webServer.h>
+#include <webSocket.h>
+
 
 bool _handlingOTA = false;
 
@@ -34,6 +36,7 @@ void setup() {
 
 	// setup the Webserver
 	webServer_begin();
+	webSocket_begin();
 
 	// setup the OTA server
 	ArduinoOTA.setHostname("hgdo");
@@ -57,5 +60,6 @@ void loop() {
 		logger_loop();
 		uap_loop();
 		webServer_loop();
+		webSocket_loop();
 	}
 }

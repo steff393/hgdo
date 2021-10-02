@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<!-- based on https://github.com/tttapa/ESP8266, GPL-3.0 License -->
+<head>
+		<title>hgdo</title>
+		<link href='https://fonts.googleapis.com/css?family=Roboto:300' rel='stylesheet' type='text/css'>
+		<link rel="stylesheet" type="text/css" href="style.css">
+		<meta name="theme-color" content="#00878f">
+		<meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport'>
+		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+
+<body>
+	<center>
+		<h1>hgdo</h1>
+		<div id='main'>
+			<table>
+				<tr>
+					<td>Zustand</td>
+					<td><span id='state'>-</span></td>
+				</tr>
+				<tr>
+					<td>Bewegung</td>
+					<td><span id='moveDir'>-</span></td>
+				</tr>
+				<tr>
+					<td>L&uuml;ftungsposition</td>
+					<td><span id='vent'>-</span></td>
+				</tr>
+				<tr>
+					<td>Fehler</td>
+					<td><span id='error'>-</span></td>
+				</tr>
+				<tr>
+					<td>Rohwert</td>
+					<td><span id='rawVal'>-</span></td>
+				</tr>
+			</table>
+		</div>
+		<h4>Aktionen</h4>
+		<div id='actions'>
+			<button id='btnOpen'   class="button">&Ouml;ffnen</button>
+			<button id='btnStop'   class="button">STOP</button>
+			<button id='btnClose'  class="button">Schlie&szlig;en</button>
+		</div>
+		<span style="font-size:8pt" id='timeNow'>-</span>
+	</center>
+	<script src="index.js"></script>
+</body>
+
+</html>

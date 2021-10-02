@@ -9,7 +9,7 @@
 const uint8_t m = 1;
 
 char cfgHgdoVersion[]     = "v0.0.1";           // hgdo version
-char cfgBuildDate[]       = "2021-09-30";	      // hgdo build date
+char cfgBuildDate[]       = "2021-10-02";	      // hgdo build date
 
 char     cfgApSsid[32];	              // SSID of the initial Access Point
 char     cfgApPass[63];               // Password of the initial Access Point
