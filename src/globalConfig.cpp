@@ -14,7 +14,10 @@ char cfgBuildDate[]       = "2021-10-02";	      // hgdo build date
 char     cfgApSsid[32];	              // SSID of the initial Access Point
 char     cfgApPass[63];               // Password of the initial Access Point
 char     cfgNtpServer[30];            // NTP server
-uint8_t  cfgTxEnable;		              // 0: disable TX, 1: enable TX
+uint8_t  cfgTxEnable;                 // 0: disable TX, 1: enable TX
+uint8_t  cfgTimeOn;                   // Hour to  enable button
+uint8_t  cfgTimeOff;                  // Hour to disable button
+uint16_t cfgBtnDebounce;              // Debounce time for button [ms]
 
 bool createConfig() {
 	StaticJsonDocument<1024> doc;
@@ -88,6 +91,9 @@ void loadConfig() {
 	strncpy(cfgApPass,          doc["cfgApPass"]            | "hgdo1234",         sizeof(cfgApPass));
 	strncpy(cfgNtpServer,       doc["cfgNtpServer"]         | "europe.pool.ntp.org", sizeof(cfgNtpServer));
 	cfgTxEnable               = doc["cfgTxEnable"]          | 1;
+	cfgTimeOn                 = doc["cfgTimeOn"]            | 24;
+	cfgTimeOff                = doc["cfgTimeOff"]           | 0;
+	cfgBtnDebounce            = doc["cfgBtnDebounce"]       | 300;
 	
 	LOG(m, "cfgHgdoVersion: %s", cfgHgdoVersion);
 	LOG(m, "cfgBuildDate: %s"  , cfgBuildDate);

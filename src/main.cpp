@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <ArduinoOTA.h>
+#include <button.h>
 #include <globalConfig.h>
 #include <LittleFS.h>
 #include <logger.h>
@@ -48,6 +49,7 @@ void setup() {
 	});
 
 	uap_setup();
+	btn_setup();
 
 	Serial.print(F("Boot time: ")); Serial.println(millis());
 	Serial.print(F("Free heap: ")); Serial.println(ESP.getFreeHeap());
@@ -59,6 +61,7 @@ void loop() {
 	if(!_handlingOTA) {
 		logger_loop();
 		uap_loop();
+		btn_loop();
 		webServer_loop();
 		webSocket_loop();
 	}
