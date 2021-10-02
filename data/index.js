@@ -37,7 +37,7 @@ function processReceivedCommand(evt) {
 				document.getElementById('moveDir').innerHTML = '&Ouml;ffnet';
 			} 
 		}	else {
-			document.getElementById('moveDir').innerHTML = '---';
+			document.getElementById('moveDir').innerHTML = 'keine';
 		}
 
 		if (obj.rawVal & uap_status.VENTPOS) {
@@ -46,14 +46,15 @@ function processReceivedCommand(evt) {
 			document.getElementById('vent').innerHTML = '---';
 		}
 
-		if (obj.rawVal & uap_status.ERROR) {
+		/*if (obj.rawVal & uap_status.ERROR) {
 			document.getElementById('error').innerHTML = 'aktiv';
 		} else {
 			document.getElementById('error').innerHTML = '---';
-		}
+		}*/
 
-		document.getElementById('rawVal').innerHTML = obj.rawVal;
 		document.getElementById('timeNow').innerHTML = obj.timeNow;
+		document.getElementById('rawValD0').innerHTML = 'd0 = ' + ("00000000" + (obj.rawVal & 0x00FF).toString(2)).slice(-8);
+		document.getElementById('rawValD1').innerHTML = 'd1 = ' + ("00000000" + ((obj.rawVal & 0xFF00)>>8).toString(2)).slice(-8);
 }
  
  

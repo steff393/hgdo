@@ -10,7 +10,7 @@
 
 const uint8_t m = 3;
 
-#define CYCLE_TIME	 1000	
+#define CYCLE_TIME	  500	
 #define JSON_LEN      256
 
 WebSocketsServer webSocket = WebSocketsServer(81);

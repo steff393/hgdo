@@ -12,6 +12,10 @@ h1 {
 		margin: 0px 0px 12px 0px;
 }
 
+table {
+		font-size: 14pt;
+}
+
 button {
 		font-size: 14pt;
 		width: 6em;
