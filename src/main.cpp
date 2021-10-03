@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <ArduinoOTA.h>
+#include <autoClose.h>
 #include <button.h>
 #include <globalConfig.h>
 #include <LittleFS.h>
@@ -62,6 +63,7 @@ void loop() {
 		logger_loop();
 		uap_loop();
 		btn_loop();
+		ac_loop();
 		webServer_loop();
 		webSocket_loop();
 	}

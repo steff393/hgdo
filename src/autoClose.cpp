@@ -15,7 +15,8 @@ typedef enum {
 	AC_START            = 1,
 	AC_PREWARN          = 2,
 	AC_WAIT             = 3,
-	AC_CLOSE            = 4
+	AC_CLOSE            = 4,
+	AC_ABORT_WAIT       = 5
 } acState_t;
 
 static acState_t acState        = AC_INIT;
@@ -34,8 +35,8 @@ void ac_trigger() {
 void ac_abort(bool forceStop) {
 	// stop and abort everything
 	LOG(m, "Aborted", "");
-	acState = AC_INIT;
-	acTimer = 0;
+	acState = AC_ABORT_WAIT;
+	acTimer = millis();
 	if (forceStop) {
 		LOG(m, "Stopped", "");
 		uap_triggerAction(UAP_ACTION_STOP);
@@ -53,7 +54,7 @@ void ac_loop() {
 	uint8_t      hour = log_getHours();
   uint8_t      mins = log_getMinutes();
 
-	if (hour == cfgAcTime && mins == 0) {
+	if ((hour == cfgAcTime) && (mins == 0)) {
 		ac_trigger();
 	}
 
@@ -69,7 +70,7 @@ void ac_loop() {
 			break;
 		}
 		case AC_PREWARN: {
-			if (millis() - acTimer > cfgAcDur1) {
+			if (millis() - acTimer > cfgAcDur1 * 1000) {
 				// wait to give people time to react
 				uap_triggerAction(UAP_ACTION_STOP);
 				acState = AC_WAIT;
@@ -78,23 +79,25 @@ void ac_loop() {
 			break;
 		}
 		case AC_WAIT: {
-			if (millis() - acTimer > cfgAcDur2) {
+			if (millis() - acTimer > cfgAcDur2 * 1000) {
 				// continue the movement
 				uap_triggerAction(UAP_ACTION_CLOSE);
 				acState = AC_CLOSE;
 				acTimer = millis();
 			}
-			// if during AC_WAIT a movement is detected, then abort the auto-closeing
+			// if during AC_WAIT a movement is detected, then abort the auto-closeing (but give 1000ms to stop actually)
 			uap_status_t bc = uap_getBroadcast();
-			if (bc & UAP_STATUS_MOVING) {
+			if ((millis() - acTimer > 1000) && (bc & UAP_STATUS_MOVING)) {
 				ac_abort(false);
 			}
 			break;
 		}
-		case AC_CLOSE: {
+		case AC_CLOSE:             // fall-through
+		case AC_ABORT_WAIT: {
 			// wait more than a minute to avoid triggering again
 			if (millis() - acTimer > TWO_MINUTES) {
-				ac_abort(false);
+				acState = AC_INIT;
+				acTimer = 0;
 			}
 			break;
 		}
