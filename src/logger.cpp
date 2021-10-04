@@ -17,6 +17,8 @@ static const char *mod[6] = {"", "CFG ", "WEBS", "SOCK", "BTN ", "AUTO"};
 char *   bootLog;
 uint16_t bootLogSize;
 boolean written = false;
+static char    log_date[11];    // dd.mm.yyyy
+static uint8_t log_month;
 
 boolean getDstGermany(uint32_t unixtime) {
 	
@@ -58,6 +60,13 @@ boolean getDstGermany(uint32_t unixtime) {
 	// vom Jahr, das am 1. Maerz beginnt auf unser normales Jahr umrechnen:
 	month = (uint8_t)((uint8_t)(month + 3) % 13); 
 	
+	// ---------------------- Jahr berechnen (ungefähr ;-) ) --------------------------
+	uint16_t daysSinceNewYear2020 = unixtime / SEKUNDEN_PRO_TAG - 18263ul;     // 18263 Tage zwischen 1.1.1970 und 1.1.2020
+	uint16_t year = 2020   +   4 * (daysSinceNewYear2020 / TAGE_IN_4_JAHREN)   +   (daysSinceNewYear2020 % TAGE_IN_4_JAHREN) / TAGE_IM_GEMEINJAHR;
+	sprintf_P(log_date, PSTR("%02d.%02d.%4d"), day, month, year);
+	log_month = month;
+	// ----------------------------------------------------------------------
+
 	if( month < 3 || month > 10 )     // month 1, 2, 11, 12
 		return 0;         // -> Winter
 
@@ -165,3 +174,20 @@ void log_freeBuffer() {
 	// set string-end character to first position to indicate an empty string
 	bootLog[0] = '\0';
 }
+
+void log_file(const char *msg) {
+	char filename[10];
+	sprintf(filename, PSTR("/%02d.txt"), log_month);      // e.g. October: "/10.txt"
+	File logFile = LittleFS.open(filename, "a");
+	logFile.printf_P(PSTR("%s, %s: %s\n"), log_date, timeClient.getFormattedTime(), msg);
+	logFile.close();
+}
+
+
+void log_cleanFiles() {
+	FSInfo fs_info;   
+	LittleFS.info(fs_info);
+}
+
+
+

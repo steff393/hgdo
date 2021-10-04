@@ -26,18 +26,18 @@ static void triggerButton(bool allowOpen) {
 
 	if ((bc & UAP_STATUS_OPEN) ||                         // when door is completely open   OR
 		(!(bc & UAP_STATUS_MOVING) && (lastMove == UP))) {  // when door is standstill and last move was UP   then
-		uap_triggerAction(UAP_ACTION_CLOSE);                // close
+		uap_triggerAction(UAP_ACTION_CLOSE, SRC_BUTTON);                // close
 		return;
 	} 
 
 	if (((bc & UAP_STATUS_CLOSED) && allowOpen) ||         // when door is completely closed AND Opening is allowed   OR
 		 (!(bc & UAP_STATUS_MOVING) && (lastMove == DOWN))) {// when door is standstill and last move was DOWN   then
-		uap_triggerAction(UAP_ACTION_OPEN);                  // open
+		uap_triggerAction(UAP_ACTION_OPEN, SRC_BUTTON);                  // open
 		return;
 	}
 
 	// else stop (also when the status is not known, this is the safe state)
-	uap_triggerAction(UAP_ACTION_STOP);
+	uap_triggerAction(UAP_ACTION_STOP, SRC_BUTTON);
 }
 
 

@@ -4,8 +4,7 @@
 #ifndef UAP_H
 #define UAP_H
 
-typedef enum
-{
+typedef enum {
   UAP_ACTION_STOP         = 0,
   UAP_ACTION_OPEN         = 1,
   UAP_ACTION_CLOSE        = 2,
@@ -13,8 +12,7 @@ typedef enum
   UAP_ACTION_TOGGLE_LIGHT = 4
 } uap_action_t;
 
-typedef enum
-{
+typedef enum {
   UAP_STATUS_OPEN         = 0x0001,
   UAP_STATUS_CLOSED       = 0x0002,
   UAP_STATUS_ERROR        = 0x0010,
@@ -24,9 +22,18 @@ typedef enum
   UAP_STATUS_VENTPOS      = 0x0080
 } uap_status_t;
 
+typedef enum {
+  SRC_OTHER               = 0,
+  SRC_WEBSOCKET           = 1,
+  SRC_WEBSERVER           = 2,
+  SRC_BUTTON              = 3,
+  SRC_AUTOCLOSE           = 4,
+  SRC_KEYPAD              = 5
+} uap_source_t;
+
 extern void         uap_setup();
 extern void         uap_loop();
 extern uap_status_t uap_getBroadcast(void);
-extern void         uap_triggerAction(uap_action_t action);
+extern void         uap_triggerAction(uap_action_t action, uap_source_t source = SRC_OTHER);
 
 #endif /* UAP_H */

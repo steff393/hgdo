@@ -25,4 +25,6 @@ extern uint32_t log_unixTime();
 extern char* log_getBuffer(); 
 extern void log_freeBuffer(); 
 
+extern void log_file(const char *msg);
+
 #endif /* LOGGER_H */

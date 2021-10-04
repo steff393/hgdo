@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <globalConfig.h>
+#include <logger.h>
 #include <SoftwareSerial.h>
 #include <uap.h>
 
@@ -62,6 +63,7 @@ static uint8_t tx_length = 0;
 static uint16_t slave_respone_data = RESPONSE_DEFAULT;
 static uint16_t broadcast_status = 0;
 
+static const char *src[6] = {"Unbekannt: ", "Websocket: ", "Webserver: ", "Taster: ", "Auto-Close: ", "Tastenfeld: "};
 
 static void printByte(byte b) {
 	if (b < 16) {
@@ -137,30 +139,39 @@ uap_status_t uap_getBroadcast(void) {
 }
 
 
-void uap_triggerAction(uap_action_t action) {
-  switch(action) {
+void uap_triggerAction(uap_action_t action, uap_source_t source /*= SRC_OTHER*/) {
+  char msg[50];
+	strcpy(msg, src[source]);
+	strcat_P(msg, PSTR(" "));
+	switch(action) {
     case UAP_ACTION_STOP: {
+			strcat_P(msg, PSTR("Stop"));
       slave_respone_data = RESPONSE_STOP;
       break;
     }
     case UAP_ACTION_OPEN: {
+			strcat_P(msg, PSTR("Öffnen"));
       slave_respone_data = RESPONSE_OPEN;
       break;
     }
     case UAP_ACTION_CLOSE: {
+			strcat_P(msg, PSTR("Schließen"));
       slave_respone_data = RESPONSE_CLOSE;
       break;
     }
     case UAP_ACTION_VENTING: {
+			strcat_P(msg, PSTR("Lüftung"));
       slave_respone_data = RESPONSE_VENTING;
       break;
     }
     case UAP_ACTION_TOGGLE_LIGHT: {
+			strcat_P(msg, PSTR("Licht"));
       slave_respone_data = RESPONSE_TOGGLE_LIGHT;
       break;
     }
 		default: ; // do nothing
   }
+	log_file(msg);
 }
 
 
