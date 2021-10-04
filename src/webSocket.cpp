@@ -21,13 +21,10 @@ void webSocketEvent(byte num, WStype_t type, uint8_t * payload, size_t length) {
 	if(type == WStype_TEXT) {
 		LOG(m, "Payload %s", (char *)payload)
 		if (strstr_P((char *)payload, PSTR("ACT_OPEN"))) {
-			//log_file(PSTR("Websocket: Öffnen"));
 			uap_triggerAction(UAP_ACTION_OPEN, SRC_WEBSOCKET);
 		} else if (strstr_P((char *)payload, PSTR("ACT_STOP"))) {
-			//log_file(PSTR("Websocket: Stop"));
 			uap_triggerAction(UAP_ACTION_STOP, SRC_WEBSOCKET);
 		} else if (strstr_P((char *)payload, PSTR("ACT_CLOSE"))) {
-			//log_file(PSTR("Websocket: Schließen"));
 			uap_triggerAction(UAP_ACTION_CLOSE, SRC_WEBSOCKET);
 		}
 	} 

@@ -3,10 +3,12 @@
 #ifndef GLOBALCONFIG_H
 #define GLOBALCONFIG_H
 
-#define PIN_DI              2   // GPIO2, NodeMCU pin D1 --> connect to DI (Transmit to Modbus)
-#define PIN_RO              5   // GPIO5, NodeMCU pin D4 --> connect to RO (Receive from Modbus)
+#define PIN_DI              2   // GPIO2, NodeMCU pin D4 --> connect to DI (Transmit to Modbus)
+#define PIN_RO              5   // GPIO5, NodeMCU pin D1 --> connect to RO (Receive from Modbus)
 #define PIN_DE_RE           4   // GPIO4, NodeMCU pin D2 --> connect to DE & RE
 #define PIN_BTN             0   // GPIO0, NodeMCU pin D3, FLASH button
+#define PIN_SDA            14   // GPIO14,NodeMCU pin D5
+#define PIN_SCL            12   // GPIO12,NodeMCU pin D6
 
 extern char     cfgHgdoVersion[];            // hgdo version
 extern char     cfgBuildDate[];              // hgdo build date

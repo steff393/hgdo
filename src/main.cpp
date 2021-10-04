@@ -5,6 +5,7 @@
 #include <autoClose.h>
 #include <button.h>
 #include <globalConfig.h>
+#include <keyPanel.h>
 #include <LittleFS.h>
 #include <logger.h>
 #include <uap.h>
@@ -51,6 +52,7 @@ void setup() {
 
 	uap_setup();
 	btn_setup();
+	key_setup();
 
 	Serial.print(F("Boot time: ")); Serial.println(millis());
 	Serial.print(F("Free heap: ")); Serial.println(ESP.getFreeHeap());
@@ -63,6 +65,7 @@ void loop() {
 		logger_loop();
 		uap_loop();
 		btn_loop();
+		key_loop();
 		ac_loop();
 		webServer_loop();
 		webSocket_loop();
