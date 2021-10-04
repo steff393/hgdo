@@ -4,6 +4,15 @@
 Die Hörmann-Antriebe der Supramatic-3-Serie lassen sich über die Universaladapterplatine UAP1 steuern. Diese bietet aber kein WLAN-Interface, sondern nur Relais-Ausgänge und Eingänge.  
 hdgo nutzt die gleiche BUS-Schnittstelle wie die UAP1, läuft aber auf einem ESP8266 und bietet daher WLAN.  
   
+## Funktionen
+- Web-Interface (JSON)
+- Websocket-Interface
+- Bedienung per Taster (abhängig von Uhrzeit)
+- Automatisches Schließen (abhängig von Uhrzeit) mit Vorwarnung
+- Anbindung von 4x4-Tastenfeld (geplant)
+- Anbindung von RFID-Leser (evtl.)
+- Aufzeichnung der letzten Fahrten (mit Code von Tastenfeld) (geplant)
+  
 ## Beispiele
 <img src="https://i.ibb.co/7WxjjMV/Web-Interface.png">  
   
