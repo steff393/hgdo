@@ -7,6 +7,7 @@
 #include <Keypad.h>
 #include <LittleFS.h>
 #include <logger.h>
+#include <uap.h>
 #include <Wire.h>
 
 #define CYCLE_TIME                 100	// ms
@@ -14,6 +15,9 @@
 #define KEYP_CODE_MAX               20  // different codes
 #define KEYP_CODE_LEN                7  // 6 digits, e.g. "123456" + string termination
 #define KEYP_NAME_LEN               11  // 10 chars for the person name + string termination
+#define MAX_TIME_FOR_CODE         4000  // 4s
+#define WRONG_CODE_LIMIT            10  // 10 wrong tries are possible
+#define WRONG_CODE_DELAY        900000  // 15min
 
 static const uint8_t m = 6;
 
@@ -34,8 +38,15 @@ static byte colPins[COLS] = {4, 5, 6, 7}; //connect to the column pinouts of the
 //initialize an instance of class NewKeypad
 static Keypad_I2C i2cKeypad( makeKeymap(keyPadLayout), rowPins, colPins, ROWS, COLS, I2C_Addr); 
 
-static char code[KEYP_CODE_MAX][KEYP_CODE_LEN];
-static char name[KEYP_CODE_MAX][KEYP_NAME_LEN];
+static char       code[KEYP_CODE_MAX][KEYP_CODE_LEN];
+static char       name[KEYP_CODE_MAX][KEYP_NAME_LEN];
+
+static char       input[KEYP_CODE_LEN];
+static uint8_t    pos = 0;
+static uint16_t   wrongCodeCnt = 0;
+static uint32_t   wrongCodeTimer = 0;
+static uint32_t   startTime = 0;
+
 
 static boolean readCodes() {
   File file = LittleFS.open(F("/code.txt"), "r");
@@ -45,33 +56,56 @@ static boolean readCodes() {
   }
 
   uint8_t k = 0;
-  LOGN(m, "Codes: ", "");
+  //LOGN(m, "Codes: ", "");
   while (file.available() && k < KEYP_CODE_MAX) {
     // split the line into tokens limited by ; 
-		char line[KEYP_CODE_LEN + KEYP_CODE_LEN + 5];
+		char     line[KEYP_CODE_LEN + KEYP_NAME_LEN + 5];
+		char *   pch;
+		uint16_t nrChars;
 
-
-
-
-		file.readBytesUntil('\n', line, KEYP_CODE_LEN + KEYP_CODE_LEN + 1);
-  	
+		nrChars = file.readBytesUntil('\n', line, KEYP_CODE_LEN + KEYP_NAME_LEN + 4);
 		
-		
-		
-		char * pch;
-		pch = strtok(line, ";");
-		//pch = strtok((char*)file.readStringUntil('\n').c_str(), ";");
-    strncpy(code[k], pch, KEYP_CODE_LEN - 1);
-		pch = strtok(NULL, ";");
-		strncpy(name[k], pch, KEYP_NAME_LEN - 1);
+		pch = strtok(line, ";\n"); *code[k] = '\0'; strncat(code[k], pch, KEYP_CODE_LEN - 1);
+		pch = strtok(NULL, ";\n"); *name[k] = '\0';	strncat(name[k], pch, KEYP_NAME_LEN - 1);
+    
+		while (nrChars >= KEYP_CODE_LEN + KEYP_NAME_LEN + 4) {
+			// read rest of the line, but simply ignore it
+			nrChars = file.readBytesUntil('\n', line, KEYP_CODE_LEN + KEYP_NAME_LEN + 4);
+		}
 
-    if (k > 0 ) { LOGN(0, ", ", ""); }
-    LOGN(0, "%s-%s", code[k], name[k]);
+		// if (k > 0 ) { LOGN(0, ", ", ""); }
+    // LOGN(0, "%s > %s", code[k], name[k]);
     k++;
   }
 
   file.close();
   return(true);
+}
+
+
+static void checkCode(char * input) {
+	uint8_t k = 0;
+	char msg[50];
+	sprintf_P(msg, PSTR("Tastenfeld: Code %s"), input);
+	log_file(msg);
+	if (wrongCodeCnt >= WRONG_CODE_LIMIT) { 
+		// all inputs will be ignored until time has elapsed
+		return; 
+	}
+	// Search if this fits to a known code
+	while (strncasecmp(input, code[k], KEYP_CODE_LEN - 1) != 0 && k < KEYP_CODE_MAX) {
+		k++;
+	};
+	if (k < KEYP_CODE_MAX) {
+		LOG(0, "found: idx=%d, name=%s => opening", k, name[k]);
+		// open garage door
+		uap_triggerAction(UAP_ACTION_OPEN, SRC_KEYPAD);
+		wrongCodeCnt = 0;
+	} else {
+		wrongCodeCnt++;
+		wrongCodeTimer = millis();
+		LOG(0, "unknown, cnt=%d", wrongCodeCnt);
+	}
 }
 
 
@@ -93,9 +127,25 @@ void key_loop() {
 	char key = i2cKeypad.getKey();
 	
 	if (key != NO_KEY) {
-		LOGN(0, "%c,", key);
+		input[pos] = key;
+		pos++;
+		if (pos == 1) {
+			// entering first digit starts a timer
+			startTime = millis();
+		}
+		if (pos == KEYP_CODE_LEN - 1) {
+			input[pos] = '\0';              // terminate the code
+			LOGN(m, "%s entered, ", input);
+			checkCode(input);
+			pos = 0;
+		}
 	}
-	if (key == 'A') {
-		LOG(0, "-->%c", key);
+	if (pos > 0 && millis() - startTime > MAX_TIME_FOR_CODE) {
+		LOG(m, "Time elapsed", "");
+		pos = 0;
+	}
+	if (wrongCodeCnt && (millis() - wrongCodeTimer > WRONG_CODE_DELAY)) {
+		wrongCodeCnt--;
+		wrongCodeTimer = millis();
 	}
 }
