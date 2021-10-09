@@ -23,6 +23,7 @@ static const char* otaPage PROGMEM = "%OTARESULT%<br><form method='POST' action=
 
 AsyncWebServer server(80);
 boolean resetRequested = false;
+boolean resetwifiRequested = false;
 
 void onRequest(AsyncWebServerRequest *request){
 	//Handle Unknown Request
@@ -93,9 +94,8 @@ void webServer_begin() {
 	});
 
 	server.on("/resetwifi", HTTP_GET, [](AsyncWebServerRequest *request){
-		request->send(200, F("text/plain"), F("Resetting the WiFi credentials..."));
-		WiFiManager wm;
-		wm.resetSettings();
+		request->send(200, F("text/plain"), F("Resetting the WiFi credentials... Please power off/on"));
+		resetwifiRequested = true;
 	});
 
 	server.on("/json", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -195,5 +195,10 @@ void webServer_begin() {
 void webServer_loop() {
 	if (resetRequested){
 		ESP.restart();
+	}
+	if (resetwifiRequested) {
+		WiFi.disconnect(true);
+		ESP.eraseConfig();
+		resetwifiRequested = false;
 	}
 }
