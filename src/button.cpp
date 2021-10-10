@@ -11,28 +11,21 @@
 
 const uint8_t m = 4;
 
-typedef enum {
-  UNKNOWN   = 0,
-  UP        = 1,
-  DOWN      = 2
-} lastMove_t;
-
-static lastMove_t lastMove = UNKNOWN;
 static Bounce2::Button btn = Bounce2::Button();
 
 
 static void triggerButton(bool allowOpen) {
 	uap_status_t bc = uap_getBroadcast();
 
-	if ((bc & UAP_STATUS_OPEN) ||                         // when door is completely open   OR
-		(!(bc & UAP_STATUS_MOVING) && (lastMove == UP))) {  // when door is standstill and last move was UP   then
-		uap_triggerAction(UAP_ACTION_CLOSE, SRC_BUTTON);                // close
+	if ((bc & UAP_STATUS_OPEN) ||                                   // when door is completely open   OR
+		(!(bc & UAP_STATUS_MOVING) && (uap_getLastMove() == UP))) {   // when door is standstill and last move was UP   then
+		uap_triggerAction(UAP_ACTION_CLOSE, SRC_BUTTON);              // close
 		return;
 	} 
 
-	if (((bc & UAP_STATUS_CLOSED) && allowOpen) ||         // when door is completely closed AND Opening is allowed   OR
-		 (!(bc & UAP_STATUS_MOVING) && (lastMove == DOWN))) {// when door is standstill and last move was DOWN   then
-		uap_triggerAction(UAP_ACTION_OPEN, SRC_BUTTON);                  // open
+	if (((bc & UAP_STATUS_CLOSED) && allowOpen) ||                  // when door is completely closed AND Opening is allowed   OR
+		 (!(bc & UAP_STATUS_MOVING) && (uap_getLastMove() == DOWN))) {// when door is standstill and last move was DOWN   then
+		uap_triggerAction(UAP_ACTION_OPEN, SRC_BUTTON);               // open
 		return;
 	}
 
@@ -49,16 +42,6 @@ void btn_setup() {
 
 
 void btn_loop() {
-	// store the last move
-	uap_status_t bc = uap_getBroadcast();
-	if (bc & UAP_STATUS_MOVING) {
-		if (bc & UAP_STATUS_DIRECTION) {
-			lastMove = DOWN;
-		} else {
-			lastMove = UP;
-		}
-	}	
-
 	btn.update();
 	if (btn.pressed()) {
 		LOG(m, "Pressed", "");

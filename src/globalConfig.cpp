@@ -8,8 +8,8 @@
 
 const uint8_t m = 1;
 
-char cfgHgdoVersion[]     = "v0.0.1";           // hgdo version
-char cfgBuildDate[]       = "2021-10-04";	      // hgdo build date
+char cfgHgdoVersion[]     = "v0.0.2+";           // hgdo version
+char cfgBuildDate[]       = "2021-10-10";	      // hgdo build date
 
 char     cfgApSsid[32];	              // SSID of the initial Access Point
 char     cfgApPass[63];               // Password of the initial Access Point
@@ -21,6 +21,7 @@ uint16_t cfgBtnDebounce;              // Debounce time for button [ms]
 uint8_t  cfgAcTime;                   // Hour to start the auto-close [h]
 uint8_t  cfgAcDur1;                   // Duration of the auto-close PREWARN phase [s]
 uint8_t  cfgAcDur2;                   // Duration of the auto-close WAIT    phase [s]
+uint8_t  cfgHwVersion;                // Selection of the used HW
 
 bool createConfig() {
 	StaticJsonDocument<1024> doc;
@@ -100,6 +101,7 @@ void loadConfig() {
 	cfgAcTime                 = doc["cfgAcTime"]            | 24;
 	cfgAcDur1                 = doc["cfgAcDur1"]            | 2;
 	cfgAcDur2                 = doc["cfgAcDur2"]            | 30;
+	cfgHwVersion              = doc["cfgHwVersion"]         | 20;
 
 	LOG(m, "cfgHgdoVersion: %s", cfgHgdoVersion);
 	LOG(m, "cfgBuildDate: %s"  , cfgBuildDate);

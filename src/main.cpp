@@ -66,6 +66,7 @@ void loop() {
 	if(!_handlingOTA) {
 		logger_loop();
 		uap_loop();
+		uap_loop_slow();
 		btn_loop();
 		key_loop();
 		rfid_loop();

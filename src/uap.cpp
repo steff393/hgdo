@@ -8,7 +8,8 @@
 #include <uap.h>
 
 
-#define CYCLE_TIME                1		// ms
+#define CYCLE_TIME                1   // ms
+#define CYCLE_TIME_SLOW         100   // ms
 
 #define BROADCAST_ADDR            0x00
 #define MASTER_ADDR               0x80
@@ -29,6 +30,7 @@
 
 #define CRC8_INITIAL_VALUE        0xF3
 
+static const uint8_t m  = 8;
 
 /* CRC table for polynomial 0x07 */
 static const uint8_t crctable[256] = {
@@ -52,6 +54,7 @@ static const uint8_t crctable[256] = {
 
 SoftwareSerial S;
 static uint32_t lastCall       = 0;
+static uint32_t lastCallSlow   = 0;
 
 static uint8_t rx_buffer[15+3] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static bool rx_message_ready = false;
@@ -62,6 +65,9 @@ static uint8_t tx_length = 0;
 
 static uint16_t slave_respone_data = RESPONSE_DEFAULT;
 static uint16_t broadcast_status = 0;
+static uint16_t broadcast_status_old = 0;
+static lastMove_t lastMove = UNKNOWN;
+static boolean ignoreNextEvent = true;     // will also ignore wrong edge detection after reset
 
 static const char *src[7] = {"Unbekannt: ", "Websocket: ", "Webserver: ", "Taster: ", "Auto-Close: ", "Tastenfeld: ", "RFID: "};
 
@@ -142,7 +148,6 @@ uap_status_t uap_getBroadcast(void) {
 void uap_triggerAction(uap_action_t action, uap_source_t source /*= SRC_OTHER*/) {
   char msg[50];
 	strcpy(msg, src[source]);
-	strcat_P(msg, PSTR(" "));
 	switch(action) {
     case UAP_ACTION_STOP: {
 			strcat_P(msg, PSTR("Stop"));
@@ -171,6 +176,7 @@ void uap_triggerAction(uap_action_t action, uap_source_t source /*= SRC_OTHER*/)
     }
 		default: ; // do nothing
   }
+	ignoreNextEvent = true;
 	log_file(msg);
 }
 
@@ -245,7 +251,12 @@ static void transmit() {
 
 
 void uap_setup() {
-	S.begin(19200, SWSERIAL_8N1, PIN_RO, PIN_DI);
+	LOG(m, "HwVersion: %d", cfgHwVersion);
+	if (cfgHwVersion == 10) {
+		S.begin(19200, SWSERIAL_8N1, PIN_DI, PIN_RO); // inverted
+	} else {
+		S.begin(19200, SWSERIAL_8N1, PIN_RO, PIN_DI);
+	}
 	digitalWrite(PIN_DE_RE, LOW);		// LOW = listen, HIGH = transmit
 }
 
@@ -274,4 +285,65 @@ void uap_loop() {
 	if (delay_counter > 0) {
     delay_counter--;
   }
+}
+
+
+static boolean posEdge(const uint16_t mask, const uint16_t value) {
+	if (((broadcast_status & mask) == value) && ((broadcast_status_old & mask) != value)) {
+		return(true);
+	} else {
+		return(false);
+	}
+}
+
+
+void uap_loop_slow() {
+	if (millis() - lastCallSlow < CYCLE_TIME_SLOW) {
+		// avoid unnecessary frequent calls 
+		return;
+	}
+	lastCallSlow = millis();
+
+	// check for status changes
+	if (broadcast_status != broadcast_status_old) {
+		if (ignoreNextEvent) {
+			ignoreNextEvent = false;
+		} else {
+			char msg[50];
+			strcpy(msg, src[SRC_OTHER]);
+			if (posEdge(UAP_STATUS_OPEN, UAP_STATUS_OPEN)) {
+				strcat_P(msg, PSTR("Offen"));
+				log_file(msg);
+			} else if (posEdge(UAP_STATUS_CLOSED, UAP_STATUS_CLOSED)) {
+				strcat_P(msg, PSTR("Geschlossen"));
+				log_file(msg);
+			} else if (posEdge(UAP_STATUS_MOVING, 0)) {
+				strcat_P(msg, PSTR("Stop"));
+				log_file(msg);
+			}
+			if (posEdge(UAP_STATUS_CLOSING, UAP_STATUS_CLOSING)) {
+				strcat_P(msg, PSTR("Schließen"));
+				log_file(msg);
+			}
+			if (posEdge(UAP_STATUS_CLOSING, UAP_STATUS_MOVING)) {
+				strcat_P(msg, PSTR("Öffnen"));
+				log_file(msg);
+			}
+		}
+	}
+	broadcast_status_old = broadcast_status;
+	
+	// store the last move
+	if (broadcast_status & UAP_STATUS_MOVING) {
+		if (broadcast_status & UAP_STATUS_DIRECTION) {
+			lastMove = DOWN;
+		} else {
+			lastMove = UP;
+		}
+	}	
+}
+
+
+lastMove_t uap_getLastMove() {
+	return(lastMove);
 }

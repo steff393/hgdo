@@ -32,9 +32,18 @@ typedef enum {
   SRC_RFID                = 6
 } uap_source_t;
 
+typedef enum {
+  UNKNOWN   = 0,
+  UP        = 1,
+  DOWN      = 2
+} lastMove_t;
+
+
 extern void         uap_setup();
 extern void         uap_loop();
-extern uap_status_t uap_getBroadcast(void);
+extern void         uap_loop_slow();
+extern uap_status_t uap_getBroadcast();
+extern lastMove_t   uap_getLastMove();
 extern void         uap_triggerAction(uap_action_t action, uap_source_t source = SRC_OTHER);
 
 #endif /* UAP_H */
