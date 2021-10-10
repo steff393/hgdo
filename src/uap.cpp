@@ -63,7 +63,7 @@ static uint8_t tx_length = 0;
 static uint16_t slave_respone_data = RESPONSE_DEFAULT;
 static uint16_t broadcast_status = 0;
 
-static const char *src[6] = {"Unbekannt: ", "Websocket: ", "Webserver: ", "Taster: ", "Auto-Close: ", "Tastenfeld: "};
+static const char *src[7] = {"Unbekannt: ", "Websocket: ", "Webserver: ", "Taster: ", "Auto-Close: ", "Tastenfeld: ", "RFID: "};
 
 static void printByte(byte b) {
 	if (b < 16) {

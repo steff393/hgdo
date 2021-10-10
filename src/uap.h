@@ -28,7 +28,8 @@ typedef enum {
   SRC_WEBSERVER           = 2,
   SRC_BUTTON              = 3,
   SRC_AUTOCLOSE           = 4,
-  SRC_KEYPAD              = 5
+  SRC_KEYPAD              = 5,
+  SRC_RFID                = 6
 } uap_source_t;
 
 extern void         uap_setup();

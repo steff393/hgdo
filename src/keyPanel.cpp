@@ -10,12 +10,11 @@
 #include <uap.h>
 #include <Wire.h>
 
-#define CYCLE_TIME                 100	// ms
 #define I2C_Addr                  0x20  // I2C Address of PCF8574-board: 0x20 - 0x27
 #define KEYP_CODE_MAX               20  // different codes
 #define KEYP_CODE_LEN                7  // 6 digits, e.g. "123456" + string termination
 #define KEYP_NAME_LEN               11  // 10 chars for the person name + string termination
-#define MAX_TIME_FOR_CODE         4000  // 4s
+#define MAX_TIME_FOR_CODE         8000  // 8s
 #define WRONG_CODE_LIMIT            10  // 10 wrong tries are possible
 #define WRONG_CODE_DELAY        900000  // 15min
 
@@ -43,6 +42,7 @@ static char       name[KEYP_CODE_MAX][KEYP_NAME_LEN];
 
 static char       input[KEYP_CODE_LEN];
 static uint8_t    pos = 0;
+static boolean    enabled           = false;
 static uint16_t   wrongCodeCnt = 0;
 static uint32_t   wrongCodeTimer = 0;
 static uint32_t   startTime = 0;
@@ -110,7 +110,12 @@ static void checkCode(char * input) {
 
 
 void key_setup() {
-	readCodes();
+	if (!readCodes()) {
+		// there is no code.txt file => function disabled
+		enabled = false;
+		return;
+	}
+	enabled = true;
 
 	Wire.begin(PIN_SDA, PIN_SCL);
 	Wire.beginTransmission(I2C_Addr);   // Try to establish connection
@@ -124,6 +129,10 @@ void key_setup() {
 
 
 void key_loop() {
+	if (enabled == false) {
+		// avoid unnecessary calls
+		return;
+	}
 	char key = i2cKeypad.getKey();
 	
 	if (key != NO_KEY) {
@@ -148,4 +157,9 @@ void key_loop() {
 		wrongCodeCnt--;
 		wrongCodeTimer = millis();
 	}
+}
+
+
+boolean key_getEnabled() {
+	return(enabled);
 }

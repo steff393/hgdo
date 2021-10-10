@@ -8,6 +8,7 @@
 #include <keyPanel.h>
 #include <LittleFS.h>
 #include <logger.h>
+#include <rfid.h>
 #include <uap.h>
 #include <WiFiManager.h>
 #include <webServer.h>
@@ -53,6 +54,7 @@ void setup() {
 	uap_setup();
 	btn_setup();
 	key_setup();
+	rfid_setup();
 
 	Serial.print(F("Boot time: ")); Serial.println(millis());
 	Serial.print(F("Free heap: ")); Serial.println(ESP.getFreeHeap());
@@ -66,6 +68,7 @@ void loop() {
 		uap_loop();
 		btn_loop();
 		key_loop();
+		rfid_loop();
 		ac_loop();
 		webServer_loop();
 		webSocket_loop();

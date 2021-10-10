@@ -3,7 +3,8 @@
 #ifndef KEYPANEL_H
 #define KEYPANEL_H
 
-extern void key_setup();
-extern void key_loop();
+extern void    key_setup();
+extern void    key_loop();
+extern boolean key_getEnabled();
 
 #endif /* KEYPANEL_H */
