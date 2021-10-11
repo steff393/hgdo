@@ -11,6 +11,7 @@ hdgo nutzt die gleiche BUS-Schnittstelle wie die UAP1, läuft aber auf einem ESP
 - Automatisches Schließen (abhängig von Uhrzeit) mit Vorwarnung
 - Anbindung von entweder 4x4-Tastenfeld oder RFID-Leser
 - Aufzeichnung der letzten Fahrten (mit Code von Tastenfeld bzw. RFID)
+- Anzeige der Öffnungsposition, z.B. "30% offen" (geplant)
   
 ## Beispiele
 <img src="https://i.ibb.co/7WxjjMV/Web-Interface.png">  
