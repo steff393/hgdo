@@ -9,7 +9,7 @@
 const uint8_t m = 1;
 
 char cfgHgdoVersion[]     = "v0.0.2+";           // hgdo version
-char cfgBuildDate[]       = "2021-10-10";	      // hgdo build date
+char cfgBuildDate[]       = "2021-10-12";	      // hgdo build date
 
 char     cfgApSsid[32];	              // SSID of the initial Access Point
 char     cfgApPass[63];               // Password of the initial Access Point
@@ -22,6 +22,7 @@ uint8_t  cfgAcTime;                   // Hour to start the auto-close [h]
 uint8_t  cfgAcDur1;                   // Duration of the auto-close PREWARN phase [s]
 uint8_t  cfgAcDur2;                   // Duration of the auto-close WAIT    phase [s]
 uint8_t  cfgHwVersion;                // Selection of the used HW
+uint8_t  cfgLogMonths;                // Months to be logged
 
 bool createConfig() {
 	StaticJsonDocument<1024> doc;
@@ -102,6 +103,7 @@ void loadConfig() {
 	cfgAcDur1                 = doc["cfgAcDur1"]            | 2;
 	cfgAcDur2                 = doc["cfgAcDur2"]            | 30;
 	cfgHwVersion              = doc["cfgHwVersion"]         | 20;
+	cfgLogMonths              = doc["cfgLogMonths"]         | 0;
 
 	LOG(m, "cfgHgdoVersion: %s", cfgHgdoVersion);
 	LOG(m, "cfgBuildDate: %s"  , cfgBuildDate);

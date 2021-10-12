@@ -27,6 +27,7 @@ extern uint8_t  cfgAcTime;                   // Hour to start the auto-close [h]
 extern uint8_t  cfgAcDur1;                   // Duration of the auto-close PREWARN phase [s]
 extern uint8_t  cfgAcDur2;                   // Duration of the auto-close WAIT    phase [s]
 extern uint8_t  cfgHwVersion;                // Selection of the used HW
+extern uint8_t  cfgLogMonths;                // Months to be logged
 
 extern void loadConfig();
 

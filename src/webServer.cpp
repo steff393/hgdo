@@ -125,7 +125,7 @@ void webServer_begin() {
 		data[F("wifi")][F("channel")] = WiFi.channel();
 		String response;
 		serializeJson(data, response);
-		log(m, response);
+		LOGEXT(m, "%s", response);
 		request->send(200, F("application/json"), response);
 	});
 

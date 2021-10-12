@@ -9,6 +9,7 @@
 
 #define TIME_LEN            10   // "23:12:01: "
 #define MOD_LEN              6   // "WEBS: "
+#define CLEAN_PERIOD  86400000ul // 1 day in ms
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, cfgNtpServer, 3600, 60000); // GMT+1 and update every minute
@@ -16,6 +17,7 @@ NTPClient timeClient(ntpUDP, cfgNtpServer, 3600, 60000); // GMT+1 and update eve
 static const char *mod[9] = {"", "CFG ", "WEBS", "SOCK", "BTN ", "AUTO", "KEYP", "RFID", "UAP "};
 char *   bootLog;
 uint16_t bootLogSize;
+uint32_t lastClean = 0;
 boolean written = false;
 static char    log_date[11];    // dd.mm.yyyy
 static uint8_t log_month;
@@ -86,36 +88,6 @@ boolean getDstGermany(uint32_t unixtime) {
 
 }
 
-void logger_begin() {
-	bootLogSize = 5000;
-	bootLog = (char *) malloc(bootLogSize);
-	bootLog[0] = '\0';
-
-	// connect to NTP time server
-	timeClient.begin();
-}
-
-void logger_loop() {
-	timeClient.update();
-	if (getDstGermany(timeClient.getEpochTime())) timeClient.setTimeOffset(7200);
-}
-
-void log(uint8_t module, String msg, boolean newLine /* =true */) {
-	String output;
-
-	if (module) {
-		output = timeClient.getFormattedTime() + ": " + String(mod[module]) + ": ";
-	}
-	output += msg;
-	if (newLine) {
-		output += "\n";
-	}
-	Serial.print(output);
-
-	if ((strlen(bootLog)+strlen(output.c_str()) + 5) < bootLogSize) {
-		strcat(bootLog, output.c_str());
-	}
-}
 
 void log(uint8_t module, const char *msg, boolean newLine /* =true */) {
 	char output[TIME_LEN + MOD_LEN + 1];
@@ -144,17 +116,21 @@ void log(uint8_t module, const char *msg, boolean newLine /* =true */) {
 	}
 }
 
+
 String log_time() {
 	return(timeClient.getFormattedTime());
 }
+
 
 uint8_t log_getHours() {
   return ((timeClient.getEpochTime()  % 86400L) / 3600);
 }
 
+
 uint8_t log_getMinutes() {
   return ((timeClient.getEpochTime() % 3600) / 60);
 }
+
 
 uint32_t log_unixTime() {
 	// The pfox chart needs the 'real' unixtime, not corrected for timezone or DST
@@ -166,28 +142,61 @@ uint32_t log_unixTime() {
 	return(time);
 }
 
+
 char* log_getBuffer() {
 	return(bootLog);
 }
+
 
 void log_freeBuffer() {
 	// set string-end character to first position to indicate an empty string
 	bootLog[0] = '\0';
 }
 
+
 void log_file(const char *msg) {
-	char filename[10];
-	sprintf(filename, PSTR("/%02d.txt"), log_month);      // e.g. October: "/10.txt"
-	File logFile = LittleFS.open(filename, "a");
-	logFile.printf_P(PSTR("%s, %s: %s\n"), log_date, timeClient.getFormattedTime(), msg);
-	logFile.close();
+	if (cfgLogMonths != 0) {
+		char filename[10];
+		sprintf(filename, PSTR("/%02d.txt"), log_month);      // e.g. October: "/10.txt"
+		File logFile = LittleFS.open(filename, "a");
+		logFile.printf_P(PSTR("%s, %s: %s\n"), log_date, timeClient.getFormattedTime(), msg);
+		logFile.close();
+	}
 }
 
 
 void log_cleanFiles() {
-	FSInfo fs_info;   
-	LittleFS.info(fs_info);
+	int8_t monthToDelete = 0;
+	if (log_month > 0) {
+		monthToDelete = log_month - cfgLogMonths;
+		if (monthToDelete < 0) {
+			monthToDelete += 12;
+		}
+		char filename[10];
+		sprintf(filename, PSTR("/%02d.txt"), monthToDelete);      // e.g. October: "/10.txt"
+		LittleFS.remove(filename);
+	}
+	lastClean = millis();
 }
 
 
+void logger_begin() {
+	bootLogSize = 5000;
+	bootLog = (char *) malloc(bootLogSize);
+	bootLog[0] = '\0';
+
+	// connect to NTP time server
+	timeClient.begin();
+}
+
+
+void logger_loop() {
+	timeClient.update();
+	if (getDstGermany(timeClient.getEpochTime())) timeClient.setTimeOffset(7200);
+	
+	// daily clean-up of files
+	if (millis() - lastClean > CLEAN_PERIOD) {
+		log_cleanFiles();
+	}
+}
 
