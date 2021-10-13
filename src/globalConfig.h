@@ -9,9 +9,8 @@
 #define PIN_BTN             0   // GPIO0, NodeMCU pin D3, FLASH button
 #define PIN_SDA            14   // GPIO14,NodeMCU pin D5
 #define PIN_SCL            12   // GPIO12,NodeMCU pin D6
-
-#define PIN_RST							0		// GPIO0, NodeMCU pin D3 
-#define PIN_SS						 15		// GPIO15,NodeMCU pin D8
+#define PIN_RST             0   // GPIO0, NodeMCU pin D3 
+#define PIN_SS             15   // GPIO15,NodeMCU pin D8
 
 extern char     cfgHgdoVersion[];            // hgdo version
 extern char     cfgBuildDate[];              // hgdo build date

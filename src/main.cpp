@@ -15,13 +15,13 @@
 #include <webSocket.h>
 
 
-bool _handlingOTA = false;
+static bool _handlingOTA = false;
 
 
 void setup() {
 	Serial.begin(115200);
 	Serial.println(F("\n\nStarting hgdo ;-)"));
-	logger_begin();
+	logger_setup();
 
 	// define a GPIO as output
 	pinMode(PIN_DE_RE, OUTPUT);
@@ -39,8 +39,8 @@ void setup() {
 	wifiManager.autoConnect(ssid, pass);
 
 	// setup the Webserver
-	webServer_begin();
-	webSocket_begin();
+	webServer_setup();
+	webSocket_setup();
 
 	// setup the OTA server
 	ArduinoOTA.setHostname("hgdo");

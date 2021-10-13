@@ -12,7 +12,7 @@
 // large log
 #define LOGEXT(MODULE, TEXT, ...) {char s[600]; snprintf_P(s, sizeof(s), PSTR(TEXT), __VA_ARGS__); log(MODULE, s);};
 
-extern void logger_begin();
+extern void logger_setup();
 extern void logger_loop();
 
 extern void     log(uint8_t module, const char *msg, boolean newLine=true);

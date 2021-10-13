@@ -9,7 +9,7 @@
 const uint8_t m = 1;
 
 char cfgHgdoVersion[]     = "v0.0.2+";           // hgdo version
-char cfgBuildDate[]       = "2021-10-12";	      // hgdo build date
+char cfgBuildDate[]       = "2021-10-13";	      // hgdo build date
 
 char     cfgApSsid[32];	              // SSID of the initial Access Point
 char     cfgApPass[63];               // Password of the initial Access Point
@@ -24,15 +24,14 @@ uint8_t  cfgAcDur2;                   // Duration of the auto-close WAIT    phas
 uint8_t  cfgHwVersion;                // Selection of the used HW
 uint8_t  cfgLogMonths;                // Months to be logged
 
-bool createConfig() {
+
+static bool createConfig() {
 	StaticJsonDocument<1024> doc;
 
 	// default configuration parameters
-	// -------------------------------------
 	doc["cfgApSsid"]              = F("hgdo");
 	doc["cfgApPass"]              = F("hgdo1234");
 	doc["cfgTxEnable"]           	= 1;
-	// -------------------------------------
 	
 	File configFile = LittleFS.open(F("/cfg.json"), "w");
 	if (!configFile) {
@@ -45,7 +44,7 @@ bool createConfig() {
 }
 
 
-boolean checkConfig(JsonDocument& doc) {
+static boolean checkConfig(JsonDocument& doc) {
 	File configFile = LittleFS.open(F("/cfg.json"), "r");
 	if (!configFile) {
 		LOG(m, "Failed to open config file... Creating default config...","")
@@ -84,6 +83,7 @@ boolean checkConfig(JsonDocument& doc) {
 	//configFile.close();
 	return(true);
 }
+
 
 void loadConfig() {
 	StaticJsonDocument<1024> doc;

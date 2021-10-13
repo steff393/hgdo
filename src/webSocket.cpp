@@ -8,16 +8,16 @@
 #include <webSocket.h>
 #include <WebSocketsServer.h>
 
-const uint8_t m = 3;
-
 #define CYCLE_TIME	  500	
 #define JSON_LEN      256
 
-WebSocketsServer webSocket = WebSocketsServer(81);
+static const uint8_t m = 3;
+
+static WebSocketsServer webSocket = WebSocketsServer(81);
 static uint32_t lastCall   = 0;
 
 
-void webSocketEvent(byte num, WStype_t type, uint8_t * payload, size_t length) {
+static void webSocketEvent(byte num, WStype_t type, uint8_t * payload, size_t length) {
 	if(type == WStype_TEXT) {
 		LOG(m, "Payload %s", (char *)payload)
 		if (strstr_P((char *)payload, PSTR("ACT_OPEN"))) {
@@ -31,7 +31,7 @@ void webSocketEvent(byte num, WStype_t type, uint8_t * payload, size_t length) {
 }
 
 
-void webSocket_begin() {
+void webSocket_setup() {
 	// start the WebSocket connection
 	webSocket.begin();
 	webSocket.onEvent(webSocketEvent);

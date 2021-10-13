@@ -11,18 +11,18 @@
 #define MOD_LEN              6   // "WEBS: "
 #define CLEAN_PERIOD  86400000ul // 1 day in ms
 
-WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, cfgNtpServer, 3600, 60000); // GMT+1 and update every minute
+static WiFiUDP ntpUDP;
+static NTPClient timeClient(ntpUDP, cfgNtpServer, 3600, 60000); // GMT+1 and update every minute
 
 static const char *mod[9] = {"", "CFG ", "WEBS", "SOCK", "BTN ", "AUTO", "KEYP", "RFID", "UAP "};
-char *   bootLog;
-uint16_t bootLogSize;
-uint32_t lastClean = 0;
-boolean written = false;
-static char    log_date[11];    // dd.mm.yyyy
-static uint8_t log_month;
+static char *   bootLog;
+static uint16_t bootLogSize;
+static uint32_t lastClean = 0;
+static char     log_date[11];    // dd.mm.yyyy
+static uint8_t  log_month;
 
-boolean getDstGermany(uint32_t unixtime) {
+
+static boolean getDstGermany(uint32_t unixtime) {
 	
 	const uint32_t SEKUNDEN_PRO_TAG   =  86400ul; /*  24* 60 * 60 */
 	const uint32_t TAGE_IM_GEMEINJAHR =    365ul; /* kein Schaltjahr */
@@ -180,7 +180,7 @@ void log_cleanFiles() {
 }
 
 
-void logger_begin() {
+void logger_setup() {
 	bootLogSize = 5000;
 	bootLog = (char *) malloc(bootLogSize);
 	bootLog[0] = '\0';
@@ -199,4 +199,3 @@ void logger_loop() {
 		log_cleanFiles();
 	}
 }
-

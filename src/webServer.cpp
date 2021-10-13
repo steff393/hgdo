@@ -16,30 +16,33 @@
 #define WIFI_MANAGER_USE_ASYNC_WEB_SERVER
 #include <WiFiManager.h>
 
-const uint8_t m = 2;
+static const uint8_t m = 2;
 
 
 static const char* otaPage PROGMEM = "%OTARESULT%<br><form method='POST' action='/update' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form>";
 
-AsyncWebServer server(80);
-boolean resetRequested = false;
-boolean resetwifiRequested = false;
+static AsyncWebServer server(80);
+static boolean resetRequested = false;
+static boolean resetwifiRequested = false;
 
-void onRequest(AsyncWebServerRequest *request){
+
+static void onRequest(AsyncWebServerRequest *request){
 	//Handle Unknown Request
 	request->send_P(404, PSTR("text/plain"), PSTR("Not found"));
 }
 
-void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
+
+static void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
 	//Handle body
 }
 
-void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+
+static void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
 	//Handle upload
 }
 
 
-String otaProcessor(const String& var){
+static String otaProcessor(const String& var){
 	if(Update.hasError()){
 		return(F("Failed"));
 	} else {
@@ -48,12 +51,13 @@ String otaProcessor(const String& var){
 }
 
 
-String otaProcessorEmpty(const String& var){
+static String otaProcessorEmpty(const String& var){
 	// just replace the template string with nothing, neither ok, nor fail
 	return String();
 }
 
-uint8_t getSignalQuality(int rssi)
+
+static uint8_t getSignalQuality(int rssi)
 {
 		int quality = 0;
 		if (rssi <= -100) {
@@ -66,7 +70,8 @@ uint8_t getSignalQuality(int rssi)
 		return quality;
 }
 
-void webServer_begin() {
+
+void webServer_setup() {
 	server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request){
 		request->send(200, F("text/plain"), String(ESP.getFreeHeap()));
 	});
