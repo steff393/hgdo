@@ -141,41 +141,41 @@ static void parse_message(void) {
 
 
 uap_status_t uap_getBroadcast(void) {
-  return (uap_status_t) broadcast_status;
+	return (uap_status_t) broadcast_status;
 }
 
 
 void uap_triggerAction(uap_action_t action, uap_source_t source /*= SRC_OTHER*/) {
-  char msg[50];
+	char msg[50];
 	strcpy(msg, src[source]);
 	switch(action) {
-    case UAP_ACTION_STOP: {
+		case UAP_ACTION_STOP: {
 			strcat_P(msg, PSTR("Stop"));
-      slave_respone_data = RESPONSE_STOP;
-      break;
-    }
-    case UAP_ACTION_OPEN: {
+			slave_respone_data = RESPONSE_STOP;
+			break;
+		}
+		case UAP_ACTION_OPEN: {
 			strcat_P(msg, PSTR("Öffnen"));
-      slave_respone_data = RESPONSE_OPEN;
-      break;
-    }
-    case UAP_ACTION_CLOSE: {
+			slave_respone_data = RESPONSE_OPEN;
+			break;
+		}
+		case UAP_ACTION_CLOSE: {
 			strcat_P(msg, PSTR("Schließen"));
-      slave_respone_data = RESPONSE_CLOSE;
-      break;
-    }
-    case UAP_ACTION_VENTING: {
+			slave_respone_data = RESPONSE_CLOSE;
+			break;
+		}
+		case UAP_ACTION_VENTING: {
 			strcat_P(msg, PSTR("Lüftung"));
-      slave_respone_data = RESPONSE_VENTING;
-      break;
-    }
-    case UAP_ACTION_TOGGLE_LIGHT: {
+			slave_respone_data = RESPONSE_VENTING;
+			break;
+		}
+		case UAP_ACTION_TOGGLE_LIGHT: {
 			strcat_P(msg, PSTR("Licht"));
-      slave_respone_data = RESPONSE_TOGGLE_LIGHT;
-      break;
-    }
+			slave_respone_data = RESPONSE_TOGGLE_LIGHT;
+			break;
+		}
 		default: ; // do nothing
-  }
+	}
 	ignoreNextEvent = true;
 	log_file(msg);
 }
@@ -250,6 +250,15 @@ static void transmit() {
 }
 
 
+static boolean posEdge(const uint16_t mask, const uint16_t value) {
+	if (((broadcast_status & mask) == value) && ((broadcast_status_old & mask) != value)) {
+		return(true);
+	} else {
+		return(false);
+	}
+}
+
+
 void uap_setup() {
 	LOG(m, "HwVersion: %d", cfgHwVersion);
 	if (cfgHwVersion == 10) {
@@ -275,7 +284,7 @@ void uap_loop() {
 		parse_message();
 		rx_message_ready = false;
 		delay_counter = 3;
-    // Wait 3ms before answering. If not the Supramatic doesn't accept our answer.
+		// Wait 3ms before answering. If not the Supramatic doesn't accept our answer.
 	}
 
 	if(cfgTxEnable && tx_message_ready && (delay_counter == 0)) {
@@ -283,16 +292,7 @@ void uap_loop() {
 	}
 
 	if (delay_counter > 0) {
-    delay_counter--;
-  }
-}
-
-
-static boolean posEdge(const uint16_t mask, const uint16_t value) {
-	if (((broadcast_status & mask) == value) && ((broadcast_status_old & mask) != value)) {
-		return(true);
-	} else {
-		return(false);
+		delay_counter--;
 	}
 }
 

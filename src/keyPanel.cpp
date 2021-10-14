@@ -49,16 +49,16 @@ static uint32_t   startTime = 0;
 
 
 static boolean readCodes() {
-  File file = LittleFS.open(F("/code.txt"), "r");
-  if (!file) {
-    LOG(m, "Disabled (code.txt not found)", "");
-    return(false);
-  }
+	File file = LittleFS.open(F("/code.txt"), "r");
+	if (!file) {
+		LOG(m, "Disabled (code.txt not found)", "");
+		return(false);
+	}
 
-  uint8_t k = 0;
-  //LOGN(m, "Codes: ", "");
-  while (file.available() && k < KEYP_CODE_MAX) {
-    // split the line into tokens limited by ; 
+	uint8_t k = 0;
+	//LOGN(m, "Codes: ", "");
+	while (file.available() && k < KEYP_CODE_MAX) {
+		// split the line into tokens limited by ; 
 		char     line[KEYP_CODE_LEN + KEYP_NAME_LEN + 5];
 		char *   pch;
 		uint16_t nrChars;
@@ -67,19 +67,19 @@ static boolean readCodes() {
 		
 		pch = strtok(line, ";\n"); *code[k] = '\0'; strncat(code[k], pch, KEYP_CODE_LEN - 1);
 		pch = strtok(NULL, ";\n"); *name[k] = '\0';	strncat(name[k], pch, KEYP_NAME_LEN - 1);
-    
+		
 		while (nrChars >= KEYP_CODE_LEN + KEYP_NAME_LEN + 4) {
 			// read rest of the line, but simply ignore it
 			nrChars = file.readBytesUntil('\n', line, KEYP_CODE_LEN + KEYP_NAME_LEN + 4);
 		}
 
 		// if (k > 0 ) { LOGN(0, ", ", ""); }
-    // LOGN(0, "%s > %s", code[k], name[k]);
-    k++;
-  }
+		// LOGN(0, "%s > %s", code[k], name[k]);
+		k++;
+	}
 
-  file.close();
-  return(true);
+	file.close();
+	return(true);
 }
 
 

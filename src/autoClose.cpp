@@ -8,7 +8,7 @@
 #define CYCLE_TIME                100		// ms
 #define TWO_MINUTES            120000   // ms
 
-const uint8_t m = 5;
+static const uint8_t m = 5;
 
 typedef enum {
 	AC_INIT             = 0,

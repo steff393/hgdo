@@ -163,4 +163,3 @@ boolean rfid_getReleased() {
 char * rfid_getLastID() {
 	return(chipID);
 }
-

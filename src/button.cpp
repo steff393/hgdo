@@ -9,7 +9,7 @@
 
 #define CYCLE_TIME                1		// ms
 
-const uint8_t m = 4;
+static const uint8_t m = 4;
 
 static Bounce2::Button btn = Bounce2::Button();
 
