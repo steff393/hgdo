@@ -71,6 +71,7 @@ static boolean ignoreNextEvent = true;     // will also ignore wrong edge detect
 
 static const char *src[7] = {"Unbekannt: ", "Websocket: ", "Webserver: ", "Taster: ", "Auto-Close: ", "Tastenfeld: ", "RFID: "};
 
+
 static void printByte(byte b) {
 	if (b < 16) {
 		Serial.print("0");
@@ -78,6 +79,7 @@ static void printByte(byte b) {
 	Serial.print(b, HEX);
 	Serial.print(" ");
 }
+
 
 static uint8_t calc_crc8(uint8_t *p_data, uint8_t length) {
 	uint8_t i;
@@ -120,7 +122,7 @@ static void parse_message(void) {
 			tx_buffer[4] = calc_crc8(tx_buffer, 4);
 			tx_length = 5;
 			tx_message_ready = true;
-			Serial.print(" BusScan UAP1");
+			Serial.print(" SlaveScan UAP1");
 		}
 		// Slave status request command?
 		if((length == 0x01) && (rx_buffer[2] == CMD_SLAVE_STATUS_REQUEST)) {
@@ -134,6 +136,10 @@ static void parse_message(void) {
 			tx_length = 6;
 			tx_message_ready = true;
 			Serial.print(" SlaveStatusReq");
+		}
+	} else {
+		if((length == 0x02) && (rx_buffer[2] == CMD_SLAVE_SCAN)) {
+			Serial.printf(" SlaveScan %X", rx_buffer[0]);
 		}
 	}
 	Serial.println("");
@@ -214,14 +220,18 @@ static void receive() {
 			if (counter == 2) {
 				length = (data & 0x0F) + 3; // 3 = ADR + LEN + CRC 
 			} else if (counter == length) {
+				for (uint8_t i = 0; i < 7-length; i++) {
+					Serial.print("   ");  // add some space for alignment of log
+				}
 				if(calc_crc8(rx_buffer, length) == 0x00) {
 					rx_message_ready = true;
-					Serial.print(" CRC ok ");
+					Serial.print("CRC  ok; ");
 				} else {
-					Serial.print(" CRC nok ");
+					Serial.print("CRC nok; ");
 					syncNeeded = true;
 				}
 				Serial.print(millis());
+				Serial.print(";");
 				counter = 0;
 			}
 		}
@@ -229,12 +239,17 @@ static void receive() {
 }
 
 static void transmit() {
-	for (uint8_t i=0; i<tx_length; i++) {
+	uint8_t  i         = 0;
+	uint32_t startTime = 0;
+
+	for (i  =0; i < tx_length; i++) {
 		printByte(tx_buffer[i]);	// print to serial as hex value
 	}
-
+	for (i = 0; i < 7-tx_length; i++) {
+		Serial.print("   ");  // add some space for alignment of log
+	}
 	// Generate Sync break
-	Serial.print(" Transmit "); Serial.print(millis());
+	Serial.print("Sending; "); startTime = millis(); Serial.print(startTime); Serial.print("; ");
 	digitalWrite(PIN_DE_RE, HIGH);		// LOW = listen, HIGH = transmit
 	S.begin(9600, SWSERIAL_7N1);
 	S.write(0x00);
@@ -246,7 +261,7 @@ static void transmit() {
 	S.flush();
 	tx_message_ready = false;
 	digitalWrite(PIN_DE_RE, LOW);		// LOW = listen, HIGH = transmit
-	Serial.print(" finished: "); Serial.println(millis());
+	Serial.println(millis()-startTime);
 }
 
 
