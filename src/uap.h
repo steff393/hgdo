@@ -45,5 +45,6 @@ extern void         uap_loop_slow();
 extern uap_status_t uap_getBroadcast();
 extern lastMove_t   uap_getLastMove();
 extern void         uap_triggerAction(uap_action_t action, uap_source_t source = SRC_OTHER);
+extern void         uap_StopCommunication();
 
 #endif /* UAP_H */

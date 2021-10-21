@@ -140,6 +140,9 @@ void webServer_setup() {
 		response->addHeader(F("Connection"), F("close"));
 		response->addHeader(F("Access-Control-Allow-Origin"), F("*"));
 		request->send(response);
+		if (request->hasParam(F("stop"))) {
+			uap_StopCommunication();
+		}
 	});
 
 	server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request){

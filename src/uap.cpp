@@ -6,7 +6,7 @@
 #include <logger.h>
 #include <SoftwareSerial.h>
 #include <uap.h>
-
+#include <WebSocketsServer.h>
 
 #define CYCLE_TIME                1   // ms
 #define CYCLE_TIME_SLOW         100   // ms
@@ -71,13 +71,34 @@ static boolean ignoreNextEvent = true;     // will also ignore wrong edge detect
 
 static const char *src[7] = {"Unbekannt: ", "Websocket: ", "Webserver: ", "Taster: ", "Auto-Close: ", "Tastenfeld: ", "RFID: "};
 
+static WebSocketsServer webSocket = WebSocketsServer(82);
+static char    trace[200];
+static boolean traceActiv = false;
+static boolean stopComm = false;
+
+
+static void webSocketEvent(byte num, WStype_t type, uint8_t * payload, size_t length) {
+	if(type == WStype_TEXT) {
+		LOG(m, "Payload %s", (char *)payload)
+		if (strstr_P((char *)payload, PSTR("btnCont"))) {
+			traceActiv = true;
+		} else if (strstr_P((char *)payload, PSTR("btnStop"))) {
+			traceActiv = false;
+		}
+	} 
+}
+
 
 static void printByte(byte b) {
 	if (b < 16) {
-		Serial.print("0");
+		Serial.print("0"); 
 	}
-	Serial.print(b, HEX);
+	Serial.print(b, HEX); 
 	Serial.print(" ");
+  // WebSocket Trace
+	char temp[5];
+	sprintf(temp, "%02X ", b);
+	strcat(trace, temp);
 }
 
 
@@ -109,7 +130,10 @@ static void parse_message(void) {
 		if(length == 0x02) {
 			broadcast_status = rx_buffer[2];
 			broadcast_status |= (uint16_t)rx_buffer[3] << 8;
-			Serial.print(" Broadcast");
+			Serial.print(" Broadcast"); strcat(trace, " Broadcast");
+		}
+		if((rx_buffer[2] & 0x10) == 0x10) {
+			Serial.print(" ERROR"); strcat(trace, " ERROR");
 		}
 	}
 	if(rx_buffer[0] == UAP1_ADDR)	{
@@ -122,7 +146,7 @@ static void parse_message(void) {
 			tx_buffer[4] = calc_crc8(tx_buffer, 4);
 			tx_length = 5;
 			tx_message_ready = true;
-			Serial.print(" SlaveScan UAP1");
+			Serial.print(" SlaveScan UAP1"); strcat(trace, " SlaveScan UAP1");
 		}
 		// Slave status request command?
 		if((length == 0x01) && (rx_buffer[2] == CMD_SLAVE_STATUS_REQUEST)) {
@@ -135,14 +159,18 @@ static void parse_message(void) {
 			tx_buffer[5] = calc_crc8(tx_buffer, 5);
 			tx_length = 6;
 			tx_message_ready = true;
-			Serial.print(" SlaveStatusReq");
+			Serial.print(" SlaveStatusReq"); strcat(trace, " SlaveStatusReq");
 		}
 	} else {
 		if((length == 0x02) && (rx_buffer[2] == CMD_SLAVE_SCAN)) {
-			Serial.printf(" SlaveScan %X", rx_buffer[0]);
+			Serial.printf(" SlaveScan %X", rx_buffer[0]); strcat(trace, " SlaveScan");
 		}
 	}
-	Serial.println("");
+	Serial.println(""); strcat(trace, "<BR>");
+	if (traceActiv) { 
+		webSocket.broadcastTXT(trace);
+	}
+	trace[0] = '\0';
 }
 
 
@@ -205,7 +233,11 @@ static void receive() {
 				prevData1 = 0;
 				prevData2 = 0;
 				syncNeeded = false;
-				Serial.println("Sync found");
+				Serial.println("Sync found"); strcat(trace, "Sync found<BR>");
+				if (traceActiv) { 
+					webSocket.broadcastTXT(trace);
+				}
+				trace[0] = '\0';
 			} else {
 				// do nothing, just copy the data
 				prevData1 = prevData2;
@@ -221,17 +253,20 @@ static void receive() {
 				length = (data & 0x0F) + 3; // 3 = ADR + LEN + CRC 
 			} else if (counter == length) {
 				for (uint8_t i = 0; i < 7-length; i++) {
-					Serial.print("   ");  // add some space for alignment of log
+					Serial.print("   "); strcat(trace, "&nbsp;&nbsp;&nbsp;"); // add some space for alignment of log
 				}
 				if(calc_crc8(rx_buffer, length) == 0x00) {
 					rx_message_ready = true;
-					Serial.print("CRC  ok; ");
+					Serial.print("CRC  ok; "); strcat(trace, "CRC  ok; ");
 				} else {
-					Serial.print("CRC nok; ");
+					Serial.print("CRC nok; "); strcat(trace, "CRC nok; ");
 					syncNeeded = true;
 				}
 				Serial.print(millis());
-				Serial.print(";");
+				Serial.print(";"); 
+				char temp[20];
+				sprintf(temp, "%d;", millis());
+				strcat(trace, temp);
 				counter = 0;
 			}
 		}
@@ -246,7 +281,7 @@ static void transmit() {
 		printByte(tx_buffer[i]);	// print to serial as hex value
 	}
 	for (i = 0; i < 7-tx_length; i++) {
-		Serial.print("   ");  // add some space for alignment of log
+		Serial.print("   "); strcat(trace, "&nbsp;&nbsp;&nbsp;"); // add some space for alignment of log
 	}
 	// Generate Sync break
 	Serial.print("Sending; "); startTime = millis(); Serial.print(startTime); Serial.print("; ");
@@ -262,6 +297,13 @@ static void transmit() {
 	tx_message_ready = false;
 	digitalWrite(PIN_DE_RE, LOW);		// LOW = listen, HIGH = transmit
 	Serial.println(millis()-startTime);
+	char temp[20];
+	sprintf(temp, "Sending; %d; %d<BR>", startTime, millis()-startTime);
+	strcat(trace, temp);
+	if (traceActiv) { 
+		webSocket.broadcastTXT(trace);
+	}
+	trace[0] = '\0';
 }
 
 
@@ -282,10 +324,16 @@ void uap_setup() {
 		S.begin(19200, SWSERIAL_8N1, PIN_RO, PIN_DI);
 	}
 	digitalWrite(PIN_DE_RE, LOW);		// LOW = listen, HIGH = transmit
+	webSocket.begin();
+	webSocket.onEvent(webSocketEvent);
 }
 
 
 void uap_loop() {
+	if (stopComm) {
+		// stop any communication, e.g. during OTA update
+		return;
+	}
 	static uint8_t delay_counter = 0;
 	receive();
 
@@ -309,6 +357,7 @@ void uap_loop() {
 	if (delay_counter > 0) {
 		delay_counter--;
 	}
+	webSocket.loop();
 }
 
 
@@ -361,4 +410,8 @@ void uap_loop_slow() {
 
 lastMove_t uap_getLastMove() {
 	return(lastMove);
+}
+
+void uap_StopCommunication() {
+	stopComm = true;
 }
