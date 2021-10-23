@@ -10,6 +10,7 @@
 
 #define CYCLE_TIME                1   // ms
 #define CYCLE_TIME_SLOW         100   // ms
+#define TX_DELAY                  3   // ms
 
 #define BROADCAST_ADDR            0x00
 #define MASTER_ADDR               0x80
@@ -56,13 +57,6 @@ static SoftwareSerial S;
 static uint32_t lastCall       = 0;
 static uint32_t lastCallSlow   = 0;
 
-static uint8_t rx_buffer[15+3] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-static bool rx_message_ready = false;
-
-static uint8_t tx_buffer[15+3] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-static bool tx_message_ready = false;
-static uint8_t tx_length = 0;
-
 static uint16_t slave_respone_data = RESPONSE_DEFAULT;
 static uint16_t broadcast_status = 0;
 static uint16_t broadcast_status_old = 0;
@@ -71,34 +65,43 @@ static boolean ignoreNextEvent = true;     // will also ignore wrong edge detect
 
 static const char *src[7] = {"Unbekannt: ", "Websocket: ", "Webserver: ", "Taster: ", "Auto-Close: ", "Tastenfeld: ", "RFID: "};
 
-static WebSocketsServer webSocket = WebSocketsServer(82);
-static char    trace[200];
-static boolean traceActiv = false;
-static boolean stopComm = false;
+static WebSocketsServer webSocket = WebSocketsServer(50000);
+static boolean    traceActive     = false;
+static boolean    stopComm        = false;
+
+static uint8_t    rxData[5]       = {0, 0, 0, 0, 0};
+static uint8_t    txData[6]       = {0, 0, 0, 0, 0, 0};
+static uint8_t    txLength        = 0;
+static uint8_t    byteCnt         = 0;
+static uint32_t   sendTime        = 0;
 
 
 static void webSocketEvent(byte num, WStype_t type, uint8_t * payload, size_t length) {
 	if(type == WStype_TEXT) {
 		LOG(m, "Payload %s", (char *)payload)
 		if (strstr_P((char *)payload, PSTR("btnCont"))) {
-			traceActiv = true;
+			traceActive = true;
 		} else if (strstr_P((char *)payload, PSTR("btnStop"))) {
-			traceActiv = false;
+			traceActive = false;
 		}
 	} 
 }
 
 
-static void printByte(byte b) {
-	if (b < 16) {
-		Serial.print("0"); 
+static void printData(uint8_t *p_data, uint8_t from, uint8_t to) {
+	char temp[4];
+	char output[30];
+
+	sprintf_P(output, "%5lu: ", millis() & 0xFFFFu);
+	for (uint8_t i = from; i < to; i++) {
+		sprintf_P(temp, "%02X ", p_data[i]);
+		strcat(output, temp);
 	}
-	Serial.print(b, HEX); 
-	Serial.print(" ");
-  // WebSocket Trace
-	char temp[5];
-	sprintf(temp, "%02X ", b);
-	strcat(trace, temp);
+	Serial.print(output);
+	if (traceActive) {
+		webSocket.broadcastTXT(output);
+	}
+	byteCnt = 0;
 }
 
 
@@ -119,63 +122,94 @@ static uint8_t calc_crc8(uint8_t *p_data, uint8_t length) {
 }
 
 
-static void parse_message(void) {
-	uint8_t length;
-	uint8_t counter;
-	
-	length = rx_buffer[1] & 0x0F;
-	counter = (rx_buffer[1] & 0xF0) + 0x10;
-	
-	if(rx_buffer[0] == BROADCAST_ADDR) {
-		if(length == 0x02) {
-			broadcast_status = rx_buffer[2];
-			broadcast_status |= (uint16_t)rx_buffer[3] << 8;
-			Serial.print(" Broadcast"); strcat(trace, " Broadcast");
+static void receive() {
+	uint8_t   length  = 0;
+	uint8_t   counter = 0;
+	boolean   newData = false;
+	while (S.available()) {
+		// shift old elements and read new; only the last 5 bytes are evaluated; if there are more in the buffer, the older ones are ignored
+		for (uint8_t i = 0; i < 4; i++) {
+			rxData[i] = rxData[i+1];
 		}
-		if((rx_buffer[2] & 0x10) == 0x10) {
-			Serial.print(" ERROR"); strcat(trace, " ERROR");
+		rxData[4] = (uint8_t) S.read();	
+		byteCnt++;
+		newData = true;
+	}
+	if (newData) {
+		newData = false;
+		// Slave scan
+		// 28 82 01 80 06
+		if (rxData[0] == UAP1_ADDR) {
+			length = rxData[1] & 0x0F;
+			if (rxData[2] == CMD_SLAVE_SCAN && rxData[3] == MASTER_ADDR && length == 2 && calc_crc8(rxData, length + 3) == 0x00) {
+				printData(rxData, 0, 5);
+				Serial.println("SlaveScan");
+				counter = (rxData[1] & 0xF0) + 0x10;
+				txData[0] = MASTER_ADDR;
+				txData[1] = 0x02 | counter;
+				txData[2] = UAP1_TYPE;
+				txData[3] = UAP1_ADDR;
+				txData[4] = calc_crc8(txData, 4);
+				txLength = 5;
+				sendTime = millis() + TX_DELAY;
+			}
+		}
+		// Broadcast status
+		// 00 92 12 02 35
+		if (rxData[0] == BROADCAST_ADDR) {
+			length = rxData[1] & 0x0F;
+			if (length == 2 && calc_crc8(rxData, length + 3) == 0x00) {
+				printData(rxData, 0, 5);
+				Serial.println("      Broadcast");
+				broadcast_status = rxData[2];
+				broadcast_status |= (uint16_t)rxData[3] << 8;
+			}
+		}
+		// Slave status request (only 4 byte --> other indices of rxData!)
+		// 28 A1 20 2E
+		if (rxData[1] == UAP1_ADDR) {
+			length = rxData[2] & 0x0F;
+			if (rxData[3] == CMD_SLAVE_STATUS_REQUEST && length == 1 && calc_crc8(&rxData[1], length + 3) == 0x00) {
+				printData(rxData, 1, 5);
+				Serial.println("         Slave status request");
+				counter = (rxData[2] & 0xF0) + 0x10;
+				txData[0] = MASTER_ADDR;
+				txData[1] = 0x03 | counter;
+				txData[2] = CMD_SLAVE_STATUS_RESPONSE;
+				txData[3] = (uint8_t)slave_respone_data;
+				txData[4] = (uint8_t)(slave_respone_data>>8);
+				slave_respone_data = RESPONSE_DEFAULT;
+				txData[5] = calc_crc8(txData, 5);
+				txLength = 6;
+				sendTime = millis() + TX_DELAY;
+			}
+		}
+		// just print the data
+		if (byteCnt == 5) {
+			printData(rxData, 0, 5);
+			Serial.println("");
 		}
 	}
-	if(rx_buffer[0] == UAP1_ADDR)	{
-		// Bus scan command?
-		if((length == 0x02) && (rx_buffer[2] == CMD_SLAVE_SCAN)) {
-			tx_buffer[0] = MASTER_ADDR;
-			tx_buffer[1] = 0x02 | counter;
-			tx_buffer[2] = UAP1_TYPE;
-			tx_buffer[3] = UAP1_ADDR;
-			tx_buffer[4] = calc_crc8(tx_buffer, 4);
-			tx_length = 5;
-			tx_message_ready = true;
-			Serial.print(" SlaveScan UAP1"); strcat(trace, " SlaveScan UAP1");
-		}
-		// Slave status request command?
-		if((length == 0x01) && (rx_buffer[2] == CMD_SLAVE_STATUS_REQUEST)) {
-			tx_buffer[0] = MASTER_ADDR;
-			tx_buffer[1] = 0x03 | counter;
-			tx_buffer[2] = CMD_SLAVE_STATUS_RESPONSE;
-			tx_buffer[3] = (uint8_t)slave_respone_data;
-			tx_buffer[4] = (uint8_t)(slave_respone_data>>8);
-			slave_respone_data = RESPONSE_DEFAULT;
-			tx_buffer[5] = calc_crc8(tx_buffer, 5);
-			tx_length = 6;
-			tx_message_ready = true;
-			Serial.print(" SlaveStatusReq"); strcat(trace, " SlaveStatusReq");
-		}
-	} else {
-		if((length == 0x02) && (rx_buffer[2] == CMD_SLAVE_SCAN)) {
-			Serial.printf(" SlaveScan %X", rx_buffer[0]); strcat(trace, " SlaveScan");
-		}
-	}
-	Serial.println(""); strcat(trace, "<BR>");
-	if (traceActiv) { 
-		webSocket.broadcastTXT(trace);
-	}
-	trace[0] = '\0';
 }
 
 
-uap_status_t uap_getBroadcast(void) {
-	return (uap_status_t) broadcast_status;
+static void transmit() {
+	printData(txData, 0, txLength);
+	for (uint8_t i = 0; i < 7-txLength; i++) {
+		Serial.print("   ");  // add some space for alignment of log
+	}
+	// Generate Sync break
+	digitalWrite(PIN_DE_RE, HIGH);		// LOW = listen, HIGH = transmit
+	S.begin(9600, SWSERIAL_7N1);
+	S.write(0x00);
+	S.flush();
+
+	// Transmit
+	S.begin(19200, SWSERIAL_8N1);
+	S.write(txData, txLength);
+	S.flush();
+	digitalWrite(PIN_DE_RE, LOW);		// LOW = listen, HIGH = transmit
+	Serial.print("TX, "); Serial.println(millis()-sendTime);
 }
 
 
@@ -215,98 +249,6 @@ void uap_triggerAction(uap_action_t action, uap_source_t source /*= SRC_OTHER*/)
 }
 
 
-static void receive() {
-	static int8_t    counter      = 0;
-	static uint8_t   length       = 0;
-	static bool      syncNeeded   = true;
-	static byte      prevData1    = 0;
-	static byte      prevData2    = 0;
-	byte data;
-	
-	while (S.available()) {
-		data = S.read();	// read buffer, but ignore as long as last message was not parsed
-		printByte(data);	// print to serial as hex value
-
-		if (syncNeeded) {
-			// wait for the sequence 01 80 CRC and then start again
-			if ((prevData1 == CMD_SLAVE_SCAN) && (prevData2 == MASTER_ADDR)) {
-				prevData1 = 0;
-				prevData2 = 0;
-				syncNeeded = false;
-				Serial.println("Sync found"); strcat(trace, "Sync found<BR>");
-				if (traceActiv) { 
-					webSocket.broadcastTXT(trace);
-				}
-				trace[0] = '\0';
-			} else {
-				// do nothing, just copy the data
-				prevData1 = prevData2;
-				prevData2 = data;
-			}
-			return;
-		}
-
-		if (!rx_message_ready) {
-			rx_buffer[counter] = data;
-			counter++;
-			if (counter == 2) {
-				length = (data & 0x0F) + 3; // 3 = ADR + LEN + CRC 
-			} else if (counter == length) {
-				for (uint8_t i = 0; i < 7-length; i++) {
-					Serial.print("   "); strcat(trace, "&nbsp;&nbsp;&nbsp;"); // add some space for alignment of log
-				}
-				if(calc_crc8(rx_buffer, length) == 0x00) {
-					rx_message_ready = true;
-					Serial.print("CRC  ok; "); strcat(trace, "CRC  ok; ");
-				} else {
-					Serial.print("CRC nok; "); strcat(trace, "CRC nok; ");
-					syncNeeded = true;
-				}
-				Serial.print(millis());
-				Serial.print(";"); 
-				char temp[20];
-				sprintf(temp, "%d;", millis());
-				strcat(trace, temp);
-				counter = 0;
-			}
-		}
-	}
-}
-
-static void transmit() {
-	uint8_t  i         = 0;
-	uint32_t startTime = 0;
-
-	for (i  =0; i < tx_length; i++) {
-		printByte(tx_buffer[i]);	// print to serial as hex value
-	}
-	for (i = 0; i < 7-tx_length; i++) {
-		Serial.print("   "); strcat(trace, "&nbsp;&nbsp;&nbsp;"); // add some space for alignment of log
-	}
-	// Generate Sync break
-	Serial.print("Sending; "); startTime = millis(); Serial.print(startTime); Serial.print("; ");
-	digitalWrite(PIN_DE_RE, HIGH);		// LOW = listen, HIGH = transmit
-	S.begin(9600, SWSERIAL_7N1);
-	S.write(0x00);
-	S.flush();
-
-	// Transmit
-	S.begin(19200, SWSERIAL_8N1);
-	S.write(tx_buffer, tx_length);
-	S.flush();
-	tx_message_ready = false;
-	digitalWrite(PIN_DE_RE, LOW);		// LOW = listen, HIGH = transmit
-	Serial.println(millis()-startTime);
-	char temp[20];
-	sprintf(temp, "Sending; %d; %d<BR>", startTime, millis()-startTime);
-	strcat(trace, temp);
-	if (traceActiv) { 
-		webSocket.broadcastTXT(trace);
-	}
-	trace[0] = '\0';
-}
-
-
 static boolean posEdge(const uint16_t mask, const uint16_t value) {
 	if (((broadcast_status & mask) == value) && ((broadcast_status_old & mask) != value)) {
 		return(true);
@@ -330,11 +272,9 @@ void uap_setup() {
 
 
 void uap_loop() {
-	if (stopComm) {
-		// stop any communication, e.g. during OTA update
-		return;
-	}
-	static uint8_t delay_counter = 0;
+	// stop any communication, e.g. during OTA update
+	if (stopComm) { return; }
+	
 	receive();
 
 	if (millis() - lastCall < CYCLE_TIME) {
@@ -343,19 +283,9 @@ void uap_loop() {
 	}
 	lastCall = millis();
 
-	if (rx_message_ready) {
-		parse_message();
-		rx_message_ready = false;
-		delay_counter = 3;
-		// Wait 3ms before answering. If not the Supramatic doesn't accept our answer.
-	}
-
-	if(cfgTxEnable && tx_message_ready && (delay_counter == 0)) {
+	if(cfgTxEnable && sendTime!=0 && (millis() >= sendTime)) {
 		transmit();
-	}
-
-	if (delay_counter > 0) {
-		delay_counter--;
+		sendTime = 0;
 	}
 	webSocket.loop();
 }
@@ -408,9 +338,15 @@ void uap_loop_slow() {
 }
 
 
+uap_status_t uap_getBroadcast(void) {
+	return (uap_status_t) broadcast_status;
+}
+
+
 lastMove_t uap_getLastMove() {
 	return(lastMove);
 }
+
 
 void uap_StopCommunication() {
 	stopComm = true;

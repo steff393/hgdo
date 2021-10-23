@@ -5,14 +5,40 @@ var Socket;
 
 function init() 
 {
-	Socket = new WebSocket('ws://' + window.location.hostname + ':82/');
+	Socket = new WebSocket('ws://' + window.location.hostname + ':50000/');
 	Socket.onmessage = function(event) { processReceivedCommand(event); };
 }
  
  
 function processReceivedCommand(evt) {
 	//document.getElementById('log').innerHTML = document.getElementById('log').innerHTML.substr(0,4000) + evt.data;
-	document.getElementById('log').innerHTML = evt.data + document.getElementById('log').innerHTML.substr(0,5000);
+	var line;
+	var type;
+
+	line = "? "; // when unknown data
+	type = "";
+	if (evt.data.search("01 80 ") == 13 && evt.data.search("2 ") == 11) {
+		// 58785: 8E 52 01 80 A2 
+		line = "< "; type = "&nbsp;&nbsp;&nbsp;&nbsp;SlaveScan";
+	}
+	if (evt.data.search("00 ") == 7 && evt.data.search("2 ") == 11) {
+		// 18249: 00 D2 00 04 DC
+		line = "< "; type = "&nbsp;&nbsp;&nbsp;&nbsp;Broadcast" + "<BR>";
+	}
+	if (evt.data.search("28 ") == 7 && evt.data.search("20 ") == 13 && evt.data.search("1 ") == 11) {
+		// 28263: 28 E1 20 75 
+		line = "< "; type = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Slave status request";
+	}
+	if (evt.data.search("80 ") == 7 && evt.data.search("29 ") == 13 && evt.data.search("3 ") == 11) {
+		// *14844: 80 B3 29 00 10 93 
+		line = "> "; type = "&nbsp;Slave status response";
+	}
+	if (evt.data.search("80 ") == 7 && evt.data.search("14 28 ") == 13 && evt.data.search("2 ") == 11) {
+		// *14844: 80 ?2 14 28 ??
+		line = "> "; type = "&nbsp;Slave scan response";
+	}
+	line += evt.data + type + "<BR>";
+	document.getElementById('log').innerHTML = line + document.getElementById('log').innerHTML.substr(0,5000);
 }
 
 
