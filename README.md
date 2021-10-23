@@ -11,11 +11,12 @@ hdgo nutzt die gleiche BUS-Schnittstelle wie die UAP1, läuft aber auf einem ESP
 - Automatisches Schließen (abhängig von Uhrzeit) mit Vorwarnung
 - Anbindung von entweder 4x4-Tastenfeld oder RFID-Leser
 - Aufzeichnung der letzten Fahrten (mit Code von Tastenfeld bzw. RFID)
+- Trace der Buskommunikation (nur für Debugging)
 - Anzeige der Öffnungsposition, z.B. "30% offen" (geplant)
   
 ## Beispiele
 <img src="https://i.ibb.co/7WxjjMV/Web-Interface.png">  
-  
+
 ```c++
 http://x.x.x.x/json
   
@@ -54,15 +55,33 @@ http://x.x.x.x/reset          --> Reset
 ```
   
 ## Hardware
-Die verwendete Hardware ist noch nicht final. Pin-Belegungen können sich daher künftig ändern.  
-Fragen dazu bitte per Mail an wbec393@gmail.com    
+<img src="https://i.ibb.co/xCXz35Q/PCB-Schema.png">  
+  
+Über den RJ12-Stecker erfolgt die Spannungsversorgung und Buskommunikation. Die Anschlüsse für RFID, Tastenfeld und externen Taster sind unterhalb der NodeMCU platziert. Der externe Taster wird per Schraubklemmen angeschlossen. RFID und Tastenfeld über 8- bzw. 4-polige Steckerleisten.
 
+## Kontakt
+Bei Fragen oder wenn ihr Unterstützung braucht gerne einfach eine Mail schicken (wbec393@gmail.com)     
+  
 ## Credits
 Das Projekt wurde stark inspiriert von den folgenden Projekten:  
 https://github.com/stephan192/hoermann_door/  
 https://github.com/raintonr/hormann-hcp/  
 https://blog.bouni.de/posts/2018/hoerrmann-uap1/  
   
+Folgende Libraries wurden genutzt:
+- [modbus-esp8266](https://github.com/emelianov/modbus-esp8266)
+- [ESP Async WebServer](https://github.com/me-no-dev/ESPAsyncWebServer)
+- [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
+- [NTPClient](https://github.com/arduino-libraries/NTPClient)
+- [MFRC522](https://github.com/miguelbalboa/MFRC522)
+- [arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets)
+- [OTA via http](https://gist.github.com/JMishou/60cb762047b735685e8a09cd2eb42a60)
+- [WiFiManager](https://github.com/tzapu/WiFiManager)
+- [Web Interface](https://RandomNerdTutorials.com)
+- [A Beginner's Guide to the ESP8266 - article](https://github.com/tttapa/ESP8266)
+- [BOUNCE 2](https://github.com/thomasfredericks/Bounce2)
+- [Keypad library for Arduino](https://github.com/chris--a/Keypad)
+
 Vielen Dank!  
 
 ## Hinweise
@@ -70,3 +89,14 @@ Das Projekt ermöglicht eine Ansteuerung des Torantriebes aus der Ferne: ***Nutz
 Empfehlung: Das Passwort des WLAN Access Points (cfgApPass) sollte nach Erstinbetriebnahme verändert werden.  
   
 Sobald die UAP1 bzw. hgdo einmalig auf die Anfrage des Torantriebes geantwortet hat, erwartet dieser dauerhaft eine Kommunikation. Nach Entfernen von UAP1 oder hgdo muss daher der Torantrieb auf Werkseinstellungen zurückgesetzt werden, andernfalls ist keine manuelle Bedienung mehr möglich.  
+
+#### Rücksetzen des Torantriebes
+- Antrieb ausstecken
+- 10s warten
+- "PRG" drücken und **halten**
+- Stecker einstecken --> Anzeige "C"
+- "PRG" loslassen --> Anzeige "U"
+- Tortyp mit Taste "Hoch" einstellen, z.B. "1" für Sektionaltor
+- "PRG" drücken --> Anzeige "L"
+- "Hoch" drücken --> Lernfahrten starten (7x auf/zu) --> danach Anzeige "11" (blinkend)
+- 25s Warten (oder "Hoch" bis "00", dann "PRG")
