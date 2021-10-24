@@ -127,6 +127,13 @@ static void receive() {
 	uint8_t   counter = 0;
 	boolean   newData = false;
 	while (S.available()) {
+		if (byteCnt > 5 && traceActive) {
+			// data have not been fetched and will be ignored --> log them at least for debugging purposes
+			char temp[4];
+			sprintf_P(temp, "%02X ", rxData[0]);
+			webSocket.broadcastTXT(temp);
+		}
+		
 		// shift old elements and read new; only the last 5 bytes are evaluated; if there are more in the buffer, the older ones are ignored
 		for (uint8_t i = 0; i < 4; i++) {
 			rxData[i] = rxData[i+1];
@@ -185,10 +192,10 @@ static void receive() {
 			}
 		}
 		// just print the data
-		if (byteCnt == 5) {
+		if (byteCnt >= 5) {
 			printData(rxData, 0, 5);
 			Serial.println("");
-		}
+		}	
 	}
 }
 
