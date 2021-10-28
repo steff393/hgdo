@@ -27,6 +27,8 @@ extern uint8_t  cfgAcDur1;                   // Duration of the auto-close PREWA
 extern uint8_t  cfgAcDur2;                   // Duration of the auto-close WAIT    phase [s]
 extern uint8_t  cfgHwVersion;                // Selection of the used HW
 extern uint8_t  cfgLogMonths;                // Months to be logged
+extern uint8_t  cfgTrace;                    // 0: disable Trace Feature, 1: enable
+extern uint8_t  cfgAutoErrorCorr;            // 0: disable AutoErrorCorrection, 1: enable
 
 extern void loadConfig();
 

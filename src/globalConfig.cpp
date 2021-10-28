@@ -8,8 +8,8 @@
 
 const uint8_t m = 1;
 
-char cfgHgdoVersion[]     = "v0.0.5";           // hgdo version
-char cfgBuildDate[]       = "2021-10-23";	      // hgdo build date
+char cfgHgdoVersion[]     = "v0.0.5d";           // hgdo version
+char cfgBuildDate[]       = "2021-10-24";	      // hgdo build date
 
 char     cfgApSsid[32];	              // SSID of the initial Access Point
 char     cfgApPass[63];               // Password of the initial Access Point
@@ -23,6 +23,8 @@ uint8_t  cfgAcDur1;                   // Duration of the auto-close PREWARN phas
 uint8_t  cfgAcDur2;                   // Duration of the auto-close WAIT    phase [s]
 uint8_t  cfgHwVersion;                // Selection of the used HW
 uint8_t  cfgLogMonths;                // Months to be logged
+uint8_t  cfgTrace;                    // 0: disable Trace Feature, 1: enable
+uint8_t  cfgAutoErrorCorr;            // 0: disable AutoErrorCorrection, 1: enable
 
 
 static bool createConfig() {
@@ -104,8 +106,9 @@ void loadConfig() {
 	cfgAcDur2                 = doc["cfgAcDur2"]            | 30;
 	cfgHwVersion              = doc["cfgHwVersion"]         | 20;
 	cfgLogMonths              = doc["cfgLogMonths"]         | 0;
+	cfgTrace                  = doc["cfgTrace"]             | 0;
+	cfgAutoErrorCorr          = doc["cfgAutoErrorCorr"]     | 0;
 
 	LOG(m, "cfgHgdoVersion: %s", cfgHgdoVersion);
 	LOG(m, "cfgBuildDate: %s"  , cfgBuildDate);
-
 }

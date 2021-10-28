@@ -68,6 +68,7 @@ static const char *src[7] = {"Unbekannt: ", "Websocket: ", "Webserver: ", "Taste
 static WebSocketsServer webSocket = WebSocketsServer(50000);
 static boolean    traceActive     = false;
 static boolean    stopComm        = false;
+static boolean    autoErrorCorr   = false;
 
 static uint8_t    rxData[5]       = {0, 0, 0, 0, 0};
 static uint8_t    txData[6]       = {0, 0, 0, 0, 0, 0};
@@ -127,7 +128,7 @@ static void receive() {
 	uint8_t   counter = 0;
 	boolean   newData = false;
 	while (S.available()) {
-		if (byteCnt > 5 && traceActive) {
+		if (cfgTrace && byteCnt > 5 && traceActive) {
 			// data have not been fetched and will be ignored --> log them at least for debugging purposes
 			char temp[4];
 			sprintf_P(temp, "%02X ", rxData[0]);
@@ -149,8 +150,7 @@ static void receive() {
 		if (rxData[0] == UAP1_ADDR) {
 			length = rxData[1] & 0x0F;
 			if (rxData[2] == CMD_SLAVE_SCAN && rxData[3] == MASTER_ADDR && length == 2 && calc_crc8(rxData, length + 3) == 0x00) {
-				printData(rxData, 0, 5);
-				Serial.println("SlaveScan");
+				if (cfgTrace) { printData(rxData, 0, 5); Serial.println("SlaveScan"); }
 				counter = (rxData[1] & 0xF0) + 0x10;
 				txData[0] = MASTER_ADDR;
 				txData[1] = 0x02 | counter;
@@ -166,8 +166,7 @@ static void receive() {
 		if (rxData[0] == BROADCAST_ADDR) {
 			length = rxData[1] & 0x0F;
 			if (length == 2 && calc_crc8(rxData, length + 3) == 0x00) {
-				printData(rxData, 0, 5);
-				Serial.println("      Broadcast");
+				if (cfgTrace) { printData(rxData, 0, 5); Serial.println("      Broadcast"); }
 				broadcast_status = rxData[2];
 				broadcast_status |= (uint16_t)rxData[3] << 8;
 			}
@@ -177,8 +176,7 @@ static void receive() {
 		if (rxData[1] == UAP1_ADDR) {
 			length = rxData[2] & 0x0F;
 			if (rxData[3] == CMD_SLAVE_STATUS_REQUEST && length == 1 && calc_crc8(&rxData[1], length + 3) == 0x00) {
-				printData(rxData, 1, 5);
-				Serial.println("         Slave status request");
+				if (cfgTrace) { printData(rxData, 1, 5); Serial.println("         Slave status request"); }
 				counter = (rxData[2] & 0xF0) + 0x10;
 				txData[0] = MASTER_ADDR;
 				txData[1] = 0x03 | counter;
@@ -192,7 +190,7 @@ static void receive() {
 			}
 		}
 		// just print the data
-		if (byteCnt >= 5) {
+		if (cfgTrace && byteCnt >= 5) {
 			printData(rxData, 0, 5);
 			Serial.println("");
 		}	
@@ -201,9 +199,11 @@ static void receive() {
 
 
 static void transmit() {
-	printData(txData, 0, txLength);
-	for (uint8_t i = 0; i < 7-txLength; i++) {
-		Serial.print("   ");  // add some space for alignment of log
+	if (cfgTrace) {
+		printData(txData, 0, txLength);
+		for (uint8_t i = 0; i < 7-txLength; i++) {
+			Serial.print("   ");  // add some space for alignment of log
+		}
 	}
 	// Generate Sync break
 	digitalWrite(PIN_DE_RE, HIGH);		// LOW = listen, HIGH = transmit
@@ -216,7 +216,9 @@ static void transmit() {
 	S.write(txData, txLength);
 	S.flush();
 	digitalWrite(PIN_DE_RE, LOW);		// LOW = listen, HIGH = transmit
-	Serial.print("TX, "); Serial.println(millis()-sendTime);
+	if (cfgTrace) {
+		Serial.print("TX, "); Serial.println(millis()-sendTime);
+	}
 }
 
 
@@ -273,8 +275,10 @@ void uap_setup() {
 		S.begin(19200, SWSERIAL_8N1, PIN_RO, PIN_DI);
 	}
 	digitalWrite(PIN_DE_RE, LOW);		// LOW = listen, HIGH = transmit
-	webSocket.begin();
-	webSocket.onEvent(webSocketEvent);
+	if (cfgTrace) {
+		webSocket.begin();
+		webSocket.onEvent(webSocketEvent);
+	}
 }
 
 
@@ -294,7 +298,9 @@ void uap_loop() {
 		transmit();
 		sendTime = 0;
 	}
-	webSocket.loop();
+	if (cfgTrace) {
+		webSocket.loop();
+	}
 }
 
 
@@ -330,6 +336,25 @@ void uap_loop_slow() {
 				strcat_P(msg, PSTR("Öffnen"));
 				log_file(msg);
 			}
+			// --- Auto Error Correction ---
+			if(cfgAutoErrorCorr) {
+				if (posEdge(UAP_STATUS_ERROR, UAP_STATUS_ERROR)) {
+					// if an error is detected and door is open/closed then try to reset it by requesting opening/closing without movement
+					if (broadcast_status & UAP_STATUS_OPEN) {
+						slave_respone_data = RESPONSE_OPEN;
+					} else if (broadcast_status & UAP_STATUS_CLOSED) {
+						slave_respone_data = RESPONSE_CLOSE;
+					}
+					strcat_P(msg, PSTR("AutoErrorCorrection"));
+					log_file(msg);
+					autoErrorCorr = true;
+				}
+				if (autoErrorCorr && (broadcast_status & UAP_STATUS_LIGHT_RELAY)) {
+					slave_respone_data = RESPONSE_TOGGLE_LIGHT;
+					autoErrorCorr = false;
+				}
+			}
+			// --- Auto Error Correction ---
 		}
 	}
 	broadcast_status_old = broadcast_status;
