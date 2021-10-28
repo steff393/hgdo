@@ -67,6 +67,13 @@ document.getElementById('btnStop').addEventListener('click', function() {
 document.getElementById('btnClose').addEventListener('click', function() {
 	sendText('ACT_CLOSE');
 });
+document.getElementById('btnExit').addEventListener('click', function() {
+	document.getElementById('state').innerHTML = '-';
+	document.getElementById('moveDir').innerHTML = '-';
+	document.getElementById('vent').innerHTML = '-';
+	document.getElementById('timeNow').innerHTML = '-';
+	Socket.close();
+});
 
 
 function sendText(data){

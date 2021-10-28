@@ -68,6 +68,10 @@ document.getElementById('btnConErr').addEventListener('click', function() {
 	sendText('btnCont');
 	conTilError = true;
 });
+document.getElementById('btnExit').addEventListener('click', function() {
+	sendText('btnStop');
+	Socket.close();
+});
 
 
 function sendText(data){
