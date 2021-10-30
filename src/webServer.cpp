@@ -1,6 +1,7 @@
 // Copyright (c) 2021 steff393, MIT license
 
 #include <Arduino.h>
+#include <AsyncElegantOTA.h>
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
@@ -18,8 +19,6 @@
 
 static const uint8_t m = 2;
 
-
-static const char* otaPage PROGMEM = "%OTARESULT%<br><form method='POST' action='/update' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form>";
 
 static AsyncWebServer server(80);
 static boolean resetRequested = false;
@@ -39,21 +38,6 @@ static void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, si
 
 static void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
 	//Handle upload
-}
-
-
-static String otaProcessor(const String& var){
-	if(Update.hasError()){
-		return(F("Failed"));
-	} else {
-		return(F("OK"));
-	}
-}
-
-
-static String otaProcessorEmpty(const String& var){
-	// just replace the template string with nothing, neither ok, nor fail
-	return String();
 }
 
 
@@ -103,6 +87,11 @@ void webServer_setup() {
 		resetwifiRequested = true;
 	});
 
+	server.on("/stopcom", HTTP_GET, [](AsyncWebServerRequest *request){
+		uap_StopCommunication();
+		request->send(200, F("text/html"), F("Communication stopped... <a href=\"/update\">Update</a>"));
+	});
+
 	server.on("/json", HTTP_GET, [](AsyncWebServerRequest *request) {
 		DynamicJsonDocument data(2048);
 		// modify values
@@ -134,57 +123,6 @@ void webServer_setup() {
 		request->send(200, F("application/json"), response);
 	});
 
-	// OTA via http, based on https://gist.github.com/JMishou/60cb762047b735685e8a09cd2eb42a60
-	server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request){
-		AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", otaPage, otaProcessorEmpty);
-		response->addHeader(F("Connection"), F("close"));
-		response->addHeader(F("Access-Control-Allow-Origin"), F("*"));
-		request->send(response);
-		if (request->hasParam(F("stop"))) {
-			uap_StopCommunication();
-		}
-	});
-
-	server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request){
-		// the request handler is triggered after the upload has finished... 
-		// create the response, add header, and send response
-		AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", otaPage, otaProcessor);
-		response->addHeader(F("Connection"), F("close"));
-		response->addHeader(F("Access-Control-Allow-Origin"), F("*"));
-		resetRequested = true;  // Tell the main loop to restart the ESP
-		request->send(response);
-	},[](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
-		//Upload handler chunks in data
-		
-		if(!index){ // if index == 0 then this is the first frame of data
-			Serial.printf("UploadStart: %s\n", filename.c_str());
-			Serial.setDebugOutput(true);
-			
-			// calculate sketch space required for the update
-			uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-			if(!Update.begin(maxSketchSpace)){//start with max available size
-				Update.printError(Serial);
-			}
-			Update.runAsync(true); // tell the updaterClass to run in async mode
-		}
-
-		//Write chunked data to the free sketch space
-		if(Update.write(data, len) != len){
-				Update.printError(Serial);
-		}
-		
-		if(final){ // if the final flag is set then this is the last frame of data
-			if(Update.end(true)){ //true to set the size to the current progress
-					Serial.printf("Update Success: %u B\nRebooting...\n", index+len);
-				} else {
-					Update.printError(Serial);
-				}
-				Serial.setDebugOutput(false);
-		}
-	});
-	// OTA via http (end)
-
-
 	// add the SPIFFSEditor, which can be opened via "/edit"
 	server.addHandler(new SPIFFSEditor("" ,"" ,LittleFS));//http_username,http_password));
 
@@ -196,6 +134,8 @@ void webServer_setup() {
 	server.onNotFound(onRequest);
 	server.onFileUpload(onUpload);
 	server.onRequestBody(onBody);
+
+	AsyncElegantOTA.begin(&server);    // Start ElegantOTA
 
 	server.begin();
 }

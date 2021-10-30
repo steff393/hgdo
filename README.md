@@ -10,10 +10,12 @@ hdgo nutzt die gleiche BUS-Schnittstelle wie die UAP1, läuft aber auf einem ESP
 - Bedienung per Taster (abhängig von Uhrzeit)
 - Automatisches Schließen (abhängig von Uhrzeit) mit Vorwarnung
 - Anbindung von entweder 4x4-Tastenfeld oder RFID-Leser
-- Paketdienst-Funktion (Fahrt auf Lüftungsposition per Code, 15s später automatisches Schließen) --> nur zulässig mit Lichtschranke!
+- Paketdienst-Funktion (Fahrt auf Lüftungsposition per Code, 15s später automatisches Schließen) --> nur zulässig mit Lichtschranke! (noch in Erprobung)
 - Aufzeichnung der letzten Fahrten (mit Code von Tastenfeld bzw. RFID)
 - Trace der Buskommunikation (nur für Debugging)
 - Anzeige der Öffnungsposition, z.B. "30% offen" (geplant)
+
+Details zu den Funktionen werde ich nach und nach auch im [Wiki](https://github.com/steff393/hgdo/wiki) beschreiben.
   
 ## Beispiele
 <img src="https://i.ibb.co/7WxjjMV/Web-Interface.png">  
@@ -76,11 +78,11 @@ Folgende Libraries wurden genutzt:
 - [NTPClient](https://github.com/arduino-libraries/NTPClient)
 - [MFRC522](https://github.com/miguelbalboa/MFRC522)
 - [arduinoWebSockets](https://github.com/Links2004/arduinoWebSockets)
-- [OTA via http](https://gist.github.com/JMishou/60cb762047b735685e8a09cd2eb42a60)
 - [WiFiManager](https://github.com/tzapu/WiFiManager)
 - [Web Interface](https://RandomNerdTutorials.com)
 - [A Beginner's Guide to the ESP8266 - article](https://github.com/tttapa/ESP8266)
 - [Keypad library for Arduino](https://github.com/chris--a/Keypad)
+- [AsyncElegantOTA](https://github.com/ayushsharma82/AsyncElegantOTA)
 
 Vielen Dank!  
 
@@ -100,3 +102,6 @@ Sobald die UAP1 bzw. hgdo einmalig auf die Anfrage des Torantriebes geantwortet 
 - "PRG" drücken --> Anzeige "L"
 - "Hoch" drücken --> Lernfahrten starten (7x auf/zu) --> danach Anzeige "11" (blinkend)
 - 25s Warten (oder "Hoch" bis "00", dann "PRG")
+
+## Unterstützung des Projektes
+hgdo gefällt dir? [Star this project on GitHub](https://github.com/steff393/wbec/stargazers)!  
