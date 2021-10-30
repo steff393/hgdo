@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <autoClose.h>
 #include <globalConfig.h>
 #include <logger.h>
 #include <uap.h>
@@ -26,6 +27,8 @@ static void webSocketEvent(byte num, WStype_t type, uint8_t * payload, size_t le
 			uap_triggerAction(UAP_ACTION_STOP, SRC_WEBSOCKET);
 		} else if (strstr_P((char *)payload, PSTR("ACT_CLOSE"))) {
 			uap_triggerAction(UAP_ACTION_CLOSE, SRC_WEBSOCKET);
+		} else if (strstr_P((char *)payload, PSTR("ACT_PDROP"))) {
+			pd_trigger();
 		}
 	} 
 }

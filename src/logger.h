@@ -18,7 +18,7 @@ extern void logger_loop();
 extern void     log(uint8_t module, const char *msg, boolean newLine=true);
 extern String   log_time();
 extern uint8_t  log_getHours();
-extern uint8_t  log_getMinutes();
+extern uint32_t log_getSecSinceMidnight();
 extern uint32_t log_unixTime();
 
 extern char* log_getBuffer(); 

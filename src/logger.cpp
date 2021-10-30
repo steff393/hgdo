@@ -127,8 +127,8 @@ uint8_t log_getHours() {
 }
 
 
-uint8_t log_getMinutes() {
-  return ((timeClient.getEpochTime() % 3600) / 60);
+uint32_t log_getSecSinceMidnight() {
+  return (timeClient.getEpochTime() % 86400L);
 }
 
 

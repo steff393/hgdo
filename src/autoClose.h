@@ -5,6 +5,7 @@
 
 extern void         ac_loop();
 extern void         ac_trigger();
+extern void         pd_trigger();
 extern void         ac_abort(bool forceStop);
 
 #endif /* AUTOCLOSE_H */

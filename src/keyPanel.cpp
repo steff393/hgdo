@@ -2,6 +2,7 @@
 // based on https://github.com/joeyoung/arduino_keypads
 
 #include <Arduino.h>
+#include <autoClose.h>
 #include <globalConfig.h>
 #include <Keypad_I2C.h>
 #include <Keypad.h>
@@ -12,8 +13,10 @@
 
 #define I2C_Addr                  0x20  // I2C Address of PCF8574-board: 0x20 - 0x27
 #define KEYP_CODE_MAX               20  // different codes
-#define KEYP_CODE_LEN                7  // 6 digits, e.g. "123456" + string termination
+#define KEYP_CODE_LEN                5  // 4 digits, e.g. "1234" + string termination
+#define KEYP_TYPE_LEN                2  // 1 digit for the action type + string termination
 #define KEYP_NAME_LEN               11  // 10 chars for the person name + string termination
+#define MAX_LINE_LEN            KEYP_CODE_LEN + KEYP_TYPE_LEN + KEYP_NAME_LEN + 4
 #define MAX_TIME_FOR_CODE         8000  // 8s
 #define WRONG_CODE_LIMIT            10  // 10 wrong tries are possible
 #define WRONG_CODE_DELAY        900000  // 15min
@@ -38,6 +41,7 @@ static byte colPins[COLS] = {4, 5, 6, 7}; //connect to the column pinouts of the
 static Keypad_I2C i2cKeypad( makeKeymap(keyPadLayout), rowPins, colPins, ROWS, COLS, I2C_Addr); 
 
 static char       code[KEYP_CODE_MAX][KEYP_CODE_LEN];
+static char       type[KEYP_CODE_MAX][KEYP_TYPE_LEN];
 static char       name[KEYP_CODE_MAX][KEYP_NAME_LEN];
 
 static char       input[KEYP_CODE_LEN];
@@ -59,18 +63,19 @@ static boolean readCodes() {
 	//LOGN(m, "Codes: ", "");
 	while (file.available() && k < KEYP_CODE_MAX) {
 		// split the line into tokens limited by ; 
-		char     line[KEYP_CODE_LEN + KEYP_NAME_LEN + 5];
+		char     line[MAX_LINE_LEN + 1];
 		char *   pch;
 		uint16_t nrChars;
 
-		nrChars = file.readBytesUntil('\n', line, KEYP_CODE_LEN + KEYP_NAME_LEN + 4);
+		nrChars = file.readBytesUntil('\n', line, MAX_LINE_LEN);
 		
 		pch = strtok(line, ";\n"); *code[k] = '\0'; strncat(code[k], pch, KEYP_CODE_LEN - 1);
+		pch = strtok(NULL, ";\n"); *type[k] = '\0';	strncat(type[k], pch, KEYP_TYPE_LEN - 1);
 		pch = strtok(NULL, ";\n"); *name[k] = '\0';	strncat(name[k], pch, KEYP_NAME_LEN - 1);
 		
-		while (nrChars >= KEYP_CODE_LEN + KEYP_NAME_LEN + 4) {
+		while (nrChars >= MAX_LINE_LEN) {
 			// read rest of the line, but simply ignore it
-			nrChars = file.readBytesUntil('\n', line, KEYP_CODE_LEN + KEYP_NAME_LEN + 4);
+			nrChars = file.readBytesUntil('\n', line, MAX_LINE_LEN);
 		}
 
 		// if (k > 0 ) { LOGN(0, ", ", ""); }
@@ -98,8 +103,18 @@ static void checkCode(char * input) {
 	};
 	if (k < KEYP_CODE_MAX) {
 		LOG(0, "found: idx=%d, name=%s => opening", k, name[k]);
-		// open garage door
-		uap_triggerAction(UAP_ACTION_OPEN, SRC_KEYPAD);
+		
+		switch (atoi(type[k])) {
+			case 0: {
+				// open garage door
+				uap_triggerAction(UAP_ACTION_OPEN, SRC_KEYPAD); break; 
+			}
+			case 1: {
+				//start the package drop function
+				pd_trigger(); break;
+			}
+			default: ; // nothing
+		}
 		wrongCodeCnt = 0;
 	} else {
 		wrongCodeCnt++;

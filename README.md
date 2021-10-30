@@ -10,6 +10,7 @@ hdgo nutzt die gleiche BUS-Schnittstelle wie die UAP1, läuft aber auf einem ESP
 - Bedienung per Taster (abhängig von Uhrzeit)
 - Automatisches Schließen (abhängig von Uhrzeit) mit Vorwarnung
 - Anbindung von entweder 4x4-Tastenfeld oder RFID-Leser
+- Paketdienst-Funktion (Fahrt auf Lüftungsposition per Code, 15s später automatisches Schließen) --> nur zulässig mit Lichtschranke!
 - Aufzeichnung der letzten Fahrten (mit Code von Tastenfeld bzw. RFID)
 - Trace der Buskommunikation (nur für Debugging)
 - Anzeige der Öffnungsposition, z.B. "30% offen" (geplant)
@@ -79,7 +80,6 @@ Folgende Libraries wurden genutzt:
 - [WiFiManager](https://github.com/tzapu/WiFiManager)
 - [Web Interface](https://RandomNerdTutorials.com)
 - [A Beginner's Guide to the ESP8266 - article](https://github.com/tttapa/ESP8266)
-- [BOUNCE 2](https://github.com/thomasfredericks/Bounce2)
 - [Keypad library for Arduino](https://github.com/chris--a/Keypad)
 
 Vielen Dank!  
