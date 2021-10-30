@@ -16,6 +16,7 @@ function init()
 {
 	Socket = new WebSocket('ws://' + window.location.hostname + ':81/');
 	Socket.onmessage = function(event) { processReceivedCommand(event); };
+	document.getElementById('btnPDrop').style.visibility = "hidden";
 }
  
  
@@ -66,6 +67,9 @@ document.getElementById('btnStop').addEventListener('click', function() {
 });
 document.getElementById('btnClose').addEventListener('click', function() {
 	sendText('ACT_CLOSE');
+});
+document.getElementById('btnPDrop').addEventListener('click', function() {
+	sendText('ACT_PDROP');
 });
 document.getElementById('btnExit').addEventListener('click', function() {
 	document.getElementById('state').innerHTML = '-';
