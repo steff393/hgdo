@@ -90,18 +90,7 @@ Vielen Dank!
 Das Projekt ermöglicht eine Ansteuerung des Torantriebes aus der Ferne: ***Nutzung auf eigene Gefahr!***  
 Empfehlung: Das Passwort des WLAN Access Points (cfgApPass) sollte nach Erstinbetriebnahme verändert werden.  
   
-Sobald die UAP1 bzw. hgdo einmalig auf die Anfrage des Torantriebes geantwortet hat, erwartet dieser dauerhaft eine Kommunikation. Nach Entfernen von UAP1 oder hgdo muss daher der Torantrieb auf Werkseinstellungen zurückgesetzt werden, andernfalls ist keine manuelle Bedienung mehr möglich.  
-
-#### Rücksetzen des Torantriebes
-- Antrieb ausstecken
-- 10s warten
-- "PRG" drücken und **halten**
-- Stecker einstecken --> Anzeige "C"
-- "PRG" loslassen --> Anzeige "U"
-- Tortyp mit Taste "Hoch" einstellen, z.B. "1" für Sektionaltor
-- "PRG" drücken --> Anzeige "L"
-- "Hoch" drücken --> Lernfahrten starten (7x auf/zu) --> danach Anzeige "11" (blinkend)
-- 25s Warten (oder "Hoch" bis "00", dann "PRG")
+Sobald die UAP1 bzw. hgdo einmalig auf die Anfrage des Torantriebes geantwortet hat, erwartet dieser dauerhaft eine Kommunikation. Nach Entfernen von UAP1 oder hgdo muss daher der Torantrieb auf Werkseinstellungen zurückgesetzt werden (s. [Wiki](https://github.com/steff393/hgdo/wiki/Informationen-zum-Torantrieb#r%C3%BCcksetzen-des-torantriebs)), andernfalls ist keine manuelle Bedienung mehr möglich.  
 
 ## Unterstützung des Projektes
 hgdo gefällt dir? [Star this project on GitHub](https://github.com/steff393/wbec/stargazers)!  
