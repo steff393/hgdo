@@ -18,6 +18,7 @@ typedef enum {
 	AC_WAIT             = 3,
 	AC_CLOSE            = 4,
 	AC_ABORT_WAIT       = 5,
+	PD_CORRECT_ERROR    = 10,
 	PD_START            = 11,
 	PD_GOTO_VENTING     = 12,
 	PD_WAIT             = 13
@@ -37,9 +38,16 @@ void ac_trigger() {
 
 
 void pd_trigger() {
-	if (acState == AC_INIT) {
+	if (acState == AC_INIT && (uap_getBroadcast() & UAP_STATUS_CLOSED)) {
 		LOG(m, "Start Paketdienst", "");
-		acState = PD_START;
+		if (uap_getBroadcast() & UAP_STATUS_ERROR) {
+			// if an error is present, then it's not possible to go directly to venting. Send first a "close", wait and then start as usual
+			uap_triggerAction(UAP_ACTION_CLOSE, SRC_AUTOCLOSE);
+			acState = PD_CORRECT_ERROR;
+			acTimer = millis();
+		} else {
+			acState = PD_START;
+		}
 	}
 }
 
@@ -64,7 +72,6 @@ void ac_loop() {
 	lastCall = millis();
 
   uint32_t      seconds = log_getSecSinceMidnight();
-
 	if ((seconds >= (uint32_t)cfgAcTime * 3600) && (seconds <= (uint32_t)cfgAcTime * 3600 + AC_TRIGGER_INTERVAL / 1000)) {
 		// check for a 5s time-window to safely detect, but not trigger multiple times
 		ac_trigger();
@@ -115,6 +122,12 @@ void ac_loop() {
 		}
 
 
+		case PD_CORRECT_ERROR: {
+			if (millis() - acTimer > cfgPdWaitError) {
+				acState = PD_START;
+			}
+			break;
+		}
 		case PD_START: {
 			// start the first movement, e.g. a short closing to warn
 			uap_triggerAction(UAP_ACTION_VENTING, SRC_AUTOCLOSE);

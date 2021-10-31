@@ -25,8 +25,11 @@ extern uint16_t cfgBtnDebounce;              // Debounce time for button [ms]
 extern uint8_t  cfgAcTime;                   // Hour to start the auto-close [h]
 extern uint8_t  cfgAcDur1;                   // Duration of the auto-close PREWARN phase [s]
 extern uint8_t  cfgAcDur2;                   // Duration of the auto-close WAIT    phase [s]
+extern uint8_t  cfgPdTimeOn;                 // Hour to  enable package drop function
+extern uint8_t  cfgPdTimeOff;                // Hour to disable package drop function
 extern uint8_t  cfgPdWaitTime;               // Duration of the package drop  WAIT phase [s]
 extern uint8_t  cfgPdTimeout;                // Timeout of the package drop function, when venting position is missed [s]
+extern uint16_t cfgPdWaitError;              // Wait time for error correction before start [ms]
 extern uint8_t  cfgHwVersion;                // Selection of the used HW
 extern uint8_t  cfgLogMonths;                // Months to be logged
 extern uint8_t  cfgTrace;                    // 0: disable Trace Feature, 1: enable

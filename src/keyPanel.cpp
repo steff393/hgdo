@@ -110,8 +110,12 @@ static void checkCode(char * input) {
 				uap_triggerAction(UAP_ACTION_OPEN, SRC_KEYPAD); break; 
 			}
 			case 1: {
-				//start the package drop function
-				pd_trigger(); break;
+				//start the package drop function, if time is within the allowed range
+				uint32_t seconds = log_getSecSinceMidnight();
+				if ((seconds >= (uint32_t)cfgPdTimeOn * 3600) && (seconds < (uint32_t)cfgPdTimeOff * 3600)) {
+					pd_trigger(); 
+				}
+				break;
 			}
 			default: ; // nothing
 		}

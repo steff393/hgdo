@@ -9,7 +9,7 @@
 const uint8_t m = 1;
 
 char cfgHgdoVersion[]     = "v0.1.0";           // hgdo version
-char cfgBuildDate[]       = "2021-10-30";	      // hgdo build date
+char cfgBuildDate[]       = "2021-10-31";	      // hgdo build date
 
 char     cfgApSsid[32];	              // SSID of the initial Access Point
 char     cfgApPass[63];               // Password of the initial Access Point
@@ -21,8 +21,11 @@ uint16_t cfgBtnDebounce;              // Debounce time for button [ms]
 uint8_t  cfgAcTime;                   // Hour to start the auto-close [h]
 uint8_t  cfgAcDur1;                   // Duration of the auto-close PREWARN phase [s]
 uint8_t  cfgAcDur2;                   // Duration of the auto-close WAIT    phase [s]
+uint8_t  cfgPdTimeOn;                 // Hour to  enable package drop function
+uint8_t  cfgPdTimeOff;                // Hour to disable package drop function
 uint8_t  cfgPdWaitTime;               // Duration of the package drop  WAIT phase [s]
 uint8_t  cfgPdTimeout;                // Timeout of the package drop function, when venting position is missed [s]
+uint16_t cfgPdWaitError;              // Wait time for error correction before start [ms]
 uint8_t  cfgHwVersion;                // Selection of the used HW
 uint8_t  cfgLogMonths;                // Months to be logged
 uint8_t  cfgTrace;                    // 0: disable Trace Feature, 1: enable
@@ -106,8 +109,11 @@ void loadConfig() {
 	cfgAcTime                 = doc["cfgAcTime"]            | 24;
 	cfgAcDur1                 = doc["cfgAcDur1"]            | 2;
 	cfgAcDur2                 = doc["cfgAcDur2"]            | 30;
+	cfgPdTimeOn               = doc["cfgPdTimeOn"]          | 24;
+	cfgPdTimeOff              = doc["cfgPdTimeOff"]         | 0;
 	cfgPdWaitTime             = doc["cfgPdWaitTime"]        | 15;
 	cfgPdTimeout              = doc["cfgPdTimeout"]         | 10;
+	cfgPdWaitError            = doc["cfgPdWaitError"]       | 200;
 	cfgHwVersion              = doc["cfgHwVersion"]         | 20;
 	cfgLogMonths              = doc["cfgLogMonths"]         | 0;
 	cfgTrace                  = doc["cfgTrace"]             | 0;
