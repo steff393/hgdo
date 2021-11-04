@@ -31,6 +31,7 @@ extern uint8_t  cfgPdWaitTime;               // Duration of the package drop  WA
 extern uint8_t  cfgPdTimeout;                // Timeout of the package drop function, when venting position is missed [s]
 extern uint16_t cfgPdWaitError;              // Wait time for error correction before start [ms]
 extern uint8_t  cfgHwVersion;                // Selection of the used HW
+extern uint16_t cfgHeapReset;                // Minimal heap limit before a reset is executed [bytes]
 extern uint8_t  cfgLogMonths;                // Months to be logged
 extern uint8_t  cfgTrace;                    // 0: disable Trace Feature, 1: enable
 extern uint8_t  cfgAutoErrorCorr;            // 0: disable AutoErrorCorrection, 1: enable

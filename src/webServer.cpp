@@ -141,7 +141,7 @@ void webServer_setup() {
 }
 
 void webServer_loop() {
-	if (resetRequested){
+	if (resetRequested || ESP.getFreeHeap() < cfgHeapReset){
 		ESP.restart();
 	}
 	if (resetwifiRequested) {

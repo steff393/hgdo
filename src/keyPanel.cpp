@@ -167,6 +167,11 @@ void key_loop() {
 			checkCode(input);
 			pos = 0;
 		}
+		if (key == 'D' && pos == 1) {
+			// when 'D' is the first pressed button, then close
+			uap_triggerAction(UAP_ACTION_CLOSE, SRC_KEYPAD);
+			pos = 0; // needed for multiple press of 'D', but this also means, that no code must start with 'D' !!
+		}
 	}
 	if (pos > 0 && millis() - startTime > MAX_TIME_FOR_CODE) {
 		LOG(m, "Time elapsed", "");
