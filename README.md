@@ -72,7 +72,6 @@ https://github.com/raintonr/hormann-hcp/
 https://blog.bouni.de/posts/2018/hoerrmann-uap1/  
   
 Folgende Libraries wurden genutzt:
-- [modbus-esp8266](https://github.com/emelianov/modbus-esp8266)
 - [ESP Async WebServer](https://github.com/me-no-dev/ESPAsyncWebServer)
 - [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
 - [NTPClient](https://github.com/arduino-libraries/NTPClient)
