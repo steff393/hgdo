@@ -8,8 +8,8 @@
 
 const uint8_t m = 1;
 
-char cfgHgdoVersion[]     = "v0.1.1";           // hgdo version
-char cfgBuildDate[]       = "2021-11-04";	      // hgdo build date
+char cfgHgdoVersion[]     = "v0.1.1+";           // hgdo version
+char cfgBuildDate[]       = "2022-01-09";	      // hgdo build date
 
 char     cfgApSsid[32];	              // SSID of the initial Access Point
 char     cfgApPass[63];               // Password of the initial Access Point
@@ -31,6 +31,7 @@ uint16_t cfgHeapReset;                // Minimal heap limit before a reset is ex
 uint8_t  cfgLogMonths;                // Months to be logged
 uint8_t  cfgTrace;                    // 0: disable Trace Feature, 1: enable
 uint8_t  cfgAutoErrorCorr;            // 0: disable AutoErrorCorrection, 1: enable
+uint8_t  cfgMasterAddr;               // Master address: 128 (0x80) per default, 144 (0x90) for HAP1-HCP-Adapter
 
 
 static bool createConfig() {
@@ -120,6 +121,7 @@ void loadConfig() {
 	cfgLogMonths              = doc["cfgLogMonths"]         | 0;
 	cfgTrace                  = doc["cfgTrace"]             | 0;
 	cfgAutoErrorCorr          = doc["cfgAutoErrorCorr"]     | 0;
+	cfgMasterAddr             = doc["cfgMasterAddr"]        | 128;
 
 	LOG(m, "cfgHgdoVersion: %s", cfgHgdoVersion);
 	LOG(m, "cfgBuildDate: %s"  , cfgBuildDate);
