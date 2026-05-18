@@ -36,6 +36,7 @@ extern uint8_t  cfgHourReset;                // Hour to execute a reset, 0 means
 extern uint8_t  cfgLogMonths;                // Months to be logged
 extern uint8_t  cfgTrace;                    // 0: disable Trace Feature, 1: enable
 extern uint8_t  cfgAutoErrorCorr;            // 0: disable AutoErrorCorrection, 1: enable
+extern uint8_t  cfgMasterAddr;               // Master address: 128 (0x80) per default, 144 (0x90) for HAP1-HCP-Adapter
 
 extern void loadConfig();
 

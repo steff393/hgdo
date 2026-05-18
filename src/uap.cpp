@@ -13,7 +13,6 @@
 #define TX_DELAY                  3   // ms
 
 #define BROADCAST_ADDR            0x00
-#define MASTER_ADDR               0x80
 #define UAP1_ADDR                 0x28
 
 #define UAP1_TYPE                 0x14
@@ -149,10 +148,10 @@ static void receive() {
 		// 28 82 01 80 06
 		if (rxData[0] == UAP1_ADDR) {
 			length = rxData[1] & 0x0F;
-			if (rxData[2] == CMD_SLAVE_SCAN && rxData[3] == MASTER_ADDR && length == 2 && calc_crc8(rxData, length + 3) == 0x00) {
+			if (rxData[2] == CMD_SLAVE_SCAN && rxData[3] == cfgMasterAddr && length == 2 && calc_crc8(rxData, length + 3) == 0x00) {
 				if (cfgTrace) { printData(rxData, 0, 5); Serial.println("SlaveScan"); }
 				counter = (rxData[1] & 0xF0) + 0x10;
-				txData[0] = MASTER_ADDR;
+				txData[0] = cfgMasterAddr;
 				txData[1] = 0x02 | counter;
 				txData[2] = UAP1_TYPE;
 				txData[3] = UAP1_ADDR;
@@ -178,7 +177,7 @@ static void receive() {
 			if (rxData[3] == CMD_SLAVE_STATUS_REQUEST && length == 1 && calc_crc8(&rxData[1], length + 3) == 0x00) {
 				if (cfgTrace) { printData(rxData, 1, 5); Serial.println("         Slave status request"); }
 				counter = (rxData[2] & 0xF0) + 0x10;
-				txData[0] = MASTER_ADDR;
+				txData[0] = cfgMasterAddr;
 				txData[1] = 0x03 | counter;
 				txData[2] = CMD_SLAVE_STATUS_RESPONSE;
 				txData[3] = (uint8_t)slave_respone_data;
