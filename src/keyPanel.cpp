@@ -172,6 +172,11 @@ void key_loop() {
 			uap_triggerAction(UAP_ACTION_CLOSE, SRC_KEYPAD);
 			pos = 0; // needed for multiple press of 'D', but this also means, that no code must start with 'D' !!
 		}
+		if (key == 'A' && pos == 1) {
+			// when 'A' is the first pressed button, then reset
+			ESP.restart();
+			pos = 0; // needed for multiple press of 'A', but this also means, that no code must start with 'A' !!
+		}
 	}
 	if (pos > 0 && millis() - startTime > MAX_TIME_FOR_CODE) {
 		LOG(m, "Time elapsed", "");

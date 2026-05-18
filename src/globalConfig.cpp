@@ -8,8 +8,8 @@
 
 const uint8_t m = 1;
 
-char cfgHgdoVersion[]     = "v0.1.1";           // hgdo version
-char cfgBuildDate[]       = "2021-11-04";	      // hgdo build date
+char cfgHgdoVersion[]     = "v0.1.2";           // hgdo version
+char cfgBuildDate[]       = "2026-05-15";	      // hgdo build date
 
 char     cfgApSsid[32];	              // SSID of the initial Access Point
 char     cfgApPass[63];               // Password of the initial Access Point
@@ -28,6 +28,7 @@ uint8_t  cfgPdTimeout;                // Timeout of the package drop function, w
 uint16_t cfgPdWaitError;              // Wait time for error correction before start [ms]
 uint8_t  cfgHwVersion;                // Selection of the used HW
 uint16_t cfgHeapReset;                // Minimal heap limit before a reset is executed [bytes]
+uint8_t  cfgHourReset;                // Hour to execute a reset, 0 means no reset
 uint8_t  cfgLogMonths;                // Months to be logged
 uint8_t  cfgTrace;                    // 0: disable Trace Feature, 1: enable
 uint8_t  cfgAutoErrorCorr;            // 0: disable AutoErrorCorrection, 1: enable
@@ -117,6 +118,7 @@ void loadConfig() {
 	cfgPdWaitError            = doc["cfgPdWaitError"]       | 200UL;
 	cfgHwVersion              = doc["cfgHwVersion"]         | 20;
 	cfgHeapReset              = doc["cfgHeapReset"]         | 6000UL;
+	cfgHourReset              = doc["cfgHourReset"]         | 6;
 	cfgLogMonths              = doc["cfgLogMonths"]         | 0;
 	cfgTrace                  = doc["cfgTrace"]             | 0;
 	cfgAutoErrorCorr          = doc["cfgAutoErrorCorr"]     | 0;

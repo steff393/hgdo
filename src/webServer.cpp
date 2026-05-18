@@ -141,7 +141,8 @@ void webServer_setup() {
 }
 
 void webServer_loop() {
-	if (resetRequested || ESP.getFreeHeap() < cfgHeapReset){
+	if (resetRequested || ESP.getFreeHeap() < cfgHeapReset || 
+		(cfgHourReset > 0 && log_getSecSinceMidnight() == cfgHourReset * 3600)) {
 		ESP.restart();
 	}
 	if (resetwifiRequested) {

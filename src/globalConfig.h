@@ -32,6 +32,7 @@ extern uint8_t  cfgPdTimeout;                // Timeout of the package drop func
 extern uint16_t cfgPdWaitError;              // Wait time for error correction before start [ms]
 extern uint8_t  cfgHwVersion;                // Selection of the used HW
 extern uint16_t cfgHeapReset;                // Minimal heap limit before a reset is executed [bytes]
+extern uint8_t  cfgHourReset;                // Hour to execute a reset, 0 means no reset
 extern uint8_t  cfgLogMonths;                // Months to be logged
 extern uint8_t  cfgTrace;                    // 0: disable Trace Feature, 1: enable
 extern uint8_t  cfgAutoErrorCorr;            // 0: disable AutoErrorCorrection, 1: enable
